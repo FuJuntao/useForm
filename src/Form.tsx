@@ -35,7 +35,7 @@ function Form({ mobile }: FormProps) {
             return '手机号格式不正确';
           }
         },
-        validateTriggers: ['onBlur'],
+        validateTriggers: ['onBlur', 'onChange'],
       },
 
       password: {

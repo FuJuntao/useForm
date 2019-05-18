@@ -4,7 +4,7 @@
  * 函数返回值会被保存在 [FormState.error] 中，并作为表单的错误提示
  */
 export type Validator = (
-  value: string,
+  value: any,
 ) => Promise<string | undefined | void> | string | undefined | void;
 
 /**

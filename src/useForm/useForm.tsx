@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Subject } from 'rxjs';
-import { auditTime } from 'rxjs/operators';
+import { Subject, Observable } from 'rxjs';
+import { auditTime, switchMap } from 'rxjs/operators';
 
 import { Handlers, Options, ValidateStatus } from './types';
 import useFormState from './useFormState';
@@ -57,38 +57,60 @@ function useForm(options: Options = {}) {
   );
 
   /**
-   * 根据传入的参数，校验相应的值
-   * 内部使用的函数，不作为对外接口
+   * 获取校验给定值的结果
    * @param id
    * @param value
    */
-  const validateValue = useCallback(
-    async function validateValue(id: string, value: string) {
-      const { validator } = strictOptions[id];
+  const getObservableError = useCallback(
+    function getObservableError(id: string, value: any) {
+      return new Observable<string>(subscriber => {
+        const { validator } = strictOptions[id];
 
-      // 设置校验状态为校验中
-      dispatch({
-        type: 'SET_VALIDATE_STATUS',
-        id,
-        validateStatus: 'validating',
+        // 设置校验状态为校验中
+        dispatch({
+          type: 'SET_VALIDATE_STATUS',
+          id,
+          validateStatus: 'validating',
+        });
+        // 先暂时重置表单的错误信息
+        setFeildError(id, '');
+
+        Promise.resolve(validator(value))
+          .then(error => {
+            subscriber.next(error ? error : '');
+          })
+          .finally(() => {
+            subscriber.complete();
+          });
       });
-      // 先暂时重置表单的错误信息
-      setFeildError(id, '');
-
-      const error = await validator(value);
-
-      // 保存校验结果
-      setFeildError(id, error);
-      // 根据校验结果设置校验状态
-      dispatch({
-        type: 'SET_VALIDATE_STATUS',
-        id,
-        validateStatus: error ? 'error' : 'success',
-      });
-
-      return error;
     },
     [dispatch, setFeildError, strictOptions],
+  );
+
+  /**
+   * 校验给定的值
+   * @param id 表单域的 ID
+   * @param observableValue 用来获取被校验的值
+   */
+  const validateValue = useCallback(
+    function validateValue(id: string, observableValue: Observable<any>) {
+      observableValue
+        .pipe(
+          auditTime(100),
+          switchMap(value => getObservableError(id, value)),
+        )
+        .subscribe(error => {
+          // 保存校验结果
+          setFeildError(id, error);
+          // 根据校验结果设置校验状态
+          dispatch({
+            type: 'SET_VALIDATE_STATUS',
+            id,
+            validateStatus: error ? 'error' : 'success',
+          });
+        });
+    },
+    [dispatch, setFeildError, getObservableError],
   );
 
   /**
@@ -107,33 +129,29 @@ function useForm(options: Options = {}) {
       // 遍历 [validateTriggers]，根据其事件名称，分别生成一个校验函数
       validateTriggers.forEach(item => {
         if (item && item !== collectValueTrigger) {
-          const subject = new Subject<any>();
+          const validateTriggerSubject = new Subject<any>();
 
-          handlers[item] = async e => {
+          handlers[item] = e => {
             const value = getValueFromEvent(e);
-            subject.next(value);
+            validateTriggerSubject.next(value);
           };
 
-          subject.pipe(auditTime(100)).subscribe(async value => {
-            await validateValue(id, value);
-          });
+          validateValue(id, validateTriggerSubject);
         }
       });
 
-      // 默认在 onChange 事件中同步用户输入的值
-      const subject = new Subject<any>();
-      handlers[collectValueTrigger] = async e => {
+      const collectValueTriggerSubject = new Subject<any>();
+      handlers[collectValueTrigger] = e => {
+        // 同步用户输入的值
         const value = getValueFromEvent(e);
         setFeildValue(id, value);
         // 如果 [validateTriggers] 中包含 [collectValueTrigger]
         // 则在该事件中也要校验用户输入的值
         if (validateTriggers.includes(collectValueTrigger)) {
-          subject.next(value);
+          collectValueTriggerSubject.next(value);
         }
       };
-      subject.pipe(auditTime(100)).subscribe(async value => {
-        await validateValue(id, value);
-      });
+      validateValue(id, collectValueTriggerSubject);
 
       return handlers;
     },
@@ -266,11 +284,36 @@ function useForm(options: Options = {}) {
    */
   const validateFeild = useCallback(
     async function validateFeild(id: string): Promise<boolean> {
-      const { value } = formState[id];
-      const error = await validateValue(id, value);
-      return error ? false : true;
+      const { value, error, validateStatus } = formState[id];
+      const { validator } = strictOptions[id];
+
+      if (validateStatus !== 'none' && error) {
+        return false;
+      } else {
+        // 设置校验状态为校验中
+        dispatch({
+          type: 'SET_VALIDATE_STATUS',
+          id,
+          validateStatus: 'validating',
+        });
+        // 先暂时重置表单的错误信息
+        setFeildError(id, '');
+
+        const error = await validator(value);
+
+        // 保存校验结果
+        setFeildError(id, error);
+        // 根据校验结果设置校验状态
+        dispatch({
+          type: 'SET_VALIDATE_STATUS',
+          id,
+          validateStatus: error ? 'error' : 'success',
+        });
+
+        return error ? false : true;
+      }
     },
-    [formState, validateValue],
+    [formState, strictOptions, dispatch, setFeildError],
   );
 
   /**
