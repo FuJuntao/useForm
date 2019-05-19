@@ -57,21 +57,33 @@ function useForm(options: Options = {}) {
   );
 
   /**
+   * 设置表单域的校验状态
+   * @param id
+   * @param status
+   */
+  const setFeildValidateStatus = useCallback(
+    function setFeildValidateStatus(id: string, status: ValidateStatus) {
+      dispatch({
+        type: 'SET_VALIDATE_STATUS',
+        id,
+        validateStatus: status,
+      });
+    },
+    [dispatch],
+  );
+
+  /**
    * 获取校验给定值的结果
    * @param id
    * @param value
    */
-  const getObservableError = useCallback(
-    function getObservableError(id: string, value: any) {
+  const _getValidateResult = useCallback(
+    function getValidateResult(id: string, value: any) {
       return new Observable<string>(subscriber => {
         const { validator } = strictOptions[id];
 
         // 设置校验状态为校验中
-        dispatch({
-          type: 'SET_VALIDATE_STATUS',
-          id,
-          validateStatus: 'validating',
-        });
+        setFeildValidateStatus(id, 'validating');
         // 先暂时重置表单的错误信息
         setFeildError(id, '');
 
@@ -84,40 +96,36 @@ function useForm(options: Options = {}) {
           });
       });
     },
-    [dispatch, setFeildError, strictOptions],
+    [setFeildError, setFeildValidateStatus, strictOptions],
   );
 
   /**
    * 校验给定的值
    * @param id 表单域的 ID
-   * @param observableValue 用来获取被校验的值
+   * @param eventSubject 用来获取被校验的值
    */
-  const validateValue = useCallback(
-    function validateValue(id: string, observableValue: Observable<any>) {
-      observableValue
+  const _subscribeToValidate = useCallback(
+    function subscribeToValidate(id: string, eventSubject: Observable<any>) {
+      eventSubject
         .pipe(
           auditTime(100),
-          switchMap(value => getObservableError(id, value)),
+          switchMap(value => _getValidateResult(id, value)),
         )
-        .subscribe(error => {
+        .subscribe(validateResult => {
           // 保存校验结果
-          setFeildError(id, error);
+          setFeildError(id, validateResult);
           // 根据校验结果设置校验状态
-          dispatch({
-            type: 'SET_VALIDATE_STATUS',
-            id,
-            validateStatus: error ? 'error' : 'success',
-          });
+          setFeildValidateStatus(id, validateResult ? 'error' : 'success');
         });
     },
-    [dispatch, setFeildError, getObservableError],
+    [_getValidateResult, setFeildError, setFeildValidateStatus],
   );
 
   /**
    * 创建指定表单域的事件处理函数
    * @param id
    */
-  const createHandlers = useCallback(
+  const _createHandlers = useCallback(
     function createHandlers(id: string): Handlers {
       const {
         collectValueTrigger,
@@ -130,32 +138,39 @@ function useForm(options: Options = {}) {
       validateTriggers.forEach(item => {
         if (item && item !== collectValueTrigger) {
           const validateTriggerSubject = new Subject<any>();
-
           handlers[item] = e => {
             const value = getValueFromEvent(e);
             validateTriggerSubject.next(value);
           };
-
-          validateValue(id, validateTriggerSubject);
+          // 注册校验
+          _subscribeToValidate(id, validateTriggerSubject);
         }
       });
 
       const collectValueTriggerSubject = new Subject<any>();
-      handlers[collectValueTrigger] = e => {
-        // 同步用户输入的值
-        const value = getValueFromEvent(e);
-        setFeildValue(id, value);
+      if (validateTriggers.includes(collectValueTrigger)) {
         // 如果 [validateTriggers] 中包含 [collectValueTrigger]
         // 则在该事件中也要校验用户输入的值
-        if (validateTriggers.includes(collectValueTrigger)) {
+        handlers[collectValueTrigger] = e => {
+          const value = getValueFromEvent(e);
+          setFeildValue(id, value);
           collectValueTriggerSubject.next(value);
-        }
-      };
-      validateValue(id, collectValueTriggerSubject);
+        };
+        // 注册校验
+        _subscribeToValidate(id, collectValueTriggerSubject);
+      } else {
+        // 如果不需要在该事件中校验用户输入的值，取消订阅相关事件
+        collectValueTriggerSubject.unsubscribe();
+
+        handlers[collectValueTrigger] = e => {
+          const value = getValueFromEvent(e);
+          setFeildValue(id, value);
+        };
+      }
 
       return handlers;
     },
-    [setFeildValue, strictOptions, validateValue],
+    [setFeildValue, strictOptions, _subscribeToValidate],
   );
 
   /**
@@ -258,11 +273,11 @@ function useForm(options: Options = {}) {
     function useFeildProps(
       id: string,
     ): { value: any; [handler: string]: Handlers } {
-      const handlers = useMemo(() => createHandlers(id), [id]);
+      const handlers = useMemo(() => _createHandlers(id), [id]);
 
       return { value: getFeildValue(id), ...handlers };
     },
-    [createHandlers, getFeildValue],
+    [_createHandlers, getFeildValue],
   );
 
   /**
@@ -282,7 +297,7 @@ function useForm(options: Options = {}) {
    * 校验通过，返回 true；否则，返回 false
    * @param id
    */
-  const validateFeild = useCallback(
+  const _validateFeild = useCallback(
     async function validateFeild(id: string): Promise<boolean> {
       const { value, error, validateStatus } = formState[id];
       const { validator } = strictOptions[id];
@@ -291,11 +306,7 @@ function useForm(options: Options = {}) {
         return false;
       } else {
         // 设置校验状态为校验中
-        dispatch({
-          type: 'SET_VALIDATE_STATUS',
-          id,
-          validateStatus: 'validating',
-        });
+        setFeildValidateStatus(id, 'validating');
         // 先暂时重置表单的错误信息
         setFeildError(id, '');
 
@@ -304,16 +315,12 @@ function useForm(options: Options = {}) {
         // 保存校验结果
         setFeildError(id, error);
         // 根据校验结果设置校验状态
-        dispatch({
-          type: 'SET_VALIDATE_STATUS',
-          id,
-          validateStatus: error ? 'error' : 'success',
-        });
+        setFeildValidateStatus(id, error ? 'error' : 'success');
 
         return error ? false : true;
       }
     },
-    [formState, strictOptions, dispatch, setFeildError],
+    [formState, strictOptions, setFeildValidateStatus, setFeildError],
   );
 
   /**
@@ -326,20 +333,22 @@ function useForm(options: Options = {}) {
   const validateFeilds = useCallback(
     async function validateFeilds(ids?: string | string[]): Promise<boolean> {
       const idList = toList(ids);
-      const resultList = await Promise.all(idList.map(id => validateFeild(id)));
+      const resultList = await Promise.all(
+        idList.map(id => _validateFeild(id)),
+      );
       return resultList.some(passed => !passed) ? false : true;
     },
-    [toList, validateFeild],
+    [toList, _validateFeild],
   );
 
   return {
     setFeildValue,
+    setFeildError,
+    useFeildProps,
     getFeildValue,
     getFeildsValue,
-    setFeildError,
     getFeildError,
     getFeildsError,
-    useFeildProps,
     getFeildValidateStatus,
     validateFeilds,
   };
