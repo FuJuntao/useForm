@@ -27,10 +27,11 @@ function Form({ mobile }: FormProps) {
       mobile: {
         initialValue: mobile,
         validator: async (value: string) => {
-          await delay(3000);
           if (!value) {
             return '请输入手机号';
           }
+
+          await delay(Math.random() * 2000);
           if (!mobileRegExp.test(value)) {
             return '手机号格式不正确';
           }
