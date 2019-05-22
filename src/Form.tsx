@@ -22,7 +22,7 @@ interface FormProps {
 }
 
 function Form({ mobile }: FormProps) {
-  const userConfig = useMemo<Options>(
+  const options = useMemo<Options>(
     () => ({
       mobile: {
         initialValue: mobile,
@@ -57,15 +57,15 @@ function Form({ mobile }: FormProps) {
     getFeildError,
     validateFeilds,
     getFeildsValue,
-  } = useForm(userConfig);
+  } = useForm(options);
 
   async function handleSubmit(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
 
-    const isPassed = await validateFeilds();
-    console.log(`表单校验是否通过：${isPassed}`);
+    const isFormValide = await validateFeilds();
+    console.log(`表单校验是否通过：${isFormValide}`);
 
-    if (isPassed) {
+    if (isFormValide) {
       const values = getFeildsValue();
       console.log('表单值：', values);
     }
@@ -75,7 +75,7 @@ function Form({ mobile }: FormProps) {
     <form>
       <div>
         <TextField
-          label="手机号"
+          label="mobile"
           {...useFeildProps('mobile')}
           error={!!getFeildError('mobile')}
           helperText={getFeildError('mobile')}
@@ -88,7 +88,7 @@ function Form({ mobile }: FormProps) {
 
       <div>
         <TextField
-          label="密码"
+          label="password"
           {...useFeildProps('password')}
           error={!!getFeildError('password')}
           helperText={getFeildError('password')}
@@ -100,7 +100,7 @@ function Form({ mobile }: FormProps) {
       </div>
 
       <Button variant="contained" color="primary" onClick={handleSubmit}>
-        提交
+        submit
       </Button>
     </form>
   );

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Subject, Observable } from 'rxjs';
-import { auditTime, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import { Handlers, Options, ValidateStatus } from './types';
 import useFormState from './useFormState';
@@ -11,13 +11,13 @@ function useForm(options: Options = {}) {
   /**
    * 遍历用户输入的配置，获取所有的 ID
    */
-  const allIds: string[] = useMemo(() => Object.keys(options), [options]);
+  const _allIds: string[] = useMemo(() => Object.keys(options), [options]);
 
   /**
    * 把用户传入的 ids 转换成数组
    * @param ids 用户输入的 id，可以是字符串或字符串数组。如果不填写，则默认返回表单状态中所有的 ID
    */
-  const toList = useCallback(
+  const _toList = useCallback(
     function toList(ids?: string | string[]): string[] {
       // 如果只是一个字符串，则转成数组
       if (typeof ids === 'string') {
@@ -25,11 +25,11 @@ function useForm(options: Options = {}) {
       }
       // 如果没有给任何值，则默认获取所有的 ID
       if (typeof ids === 'undefined') {
-        return allIds;
+        return _allIds;
       }
       return ids;
     },
-    [allIds],
+    [_allIds],
   );
 
   /**
@@ -38,7 +38,7 @@ function useForm(options: Options = {}) {
    * @param value
    */
   const setFeildValue = useCallback(
-    function setFeildValue(id: string, value: string): void {
+    function setFeildValue(id: string, value: any): void {
       dispatch({ type: 'SET_VALUE', id, value });
     },
     [dispatch],
@@ -107,10 +107,7 @@ function useForm(options: Options = {}) {
   const _subscribeToValidate = useCallback(
     function subscribeToValidate(id: string, eventSubject: Observable<any>) {
       eventSubject
-        .pipe(
-          auditTime(100),
-          switchMap(value => _getValidateResult(id, value)),
-        )
+        .pipe(switchMap(value => _getValidateResult(id, value)))
         .subscribe(validateResult => {
           // 保存校验结果
           setFeildError(id, validateResult);
@@ -200,7 +197,7 @@ function useForm(options: Options = {}) {
    */
   const getFeildsValue = useCallback(
     function getFeildsValue(ids?: string | string[]): { [id: string]: any } {
-      const idList = toList(ids);
+      const idList = _toList(ids);
       const values: { [id: string]: any } = {};
 
       idList.forEach(id => {
@@ -209,7 +206,7 @@ function useForm(options: Options = {}) {
 
       return values;
     },
-    [getFeildValue, toList],
+    [getFeildValue, _toList],
   );
 
   /**
@@ -245,7 +242,7 @@ function useForm(options: Options = {}) {
    */
   const getFeildsError = useCallback(
     function getFeildsError(ids?: string | string[]) {
-      const idList = toList(ids);
+      const idList = _toList(ids);
 
       const errors: { [id: string]: { error: string } } = {};
       let noErrors = true;
@@ -260,7 +257,7 @@ function useForm(options: Options = {}) {
 
       return noErrors ? null : errors;
     },
-    [getFeildError, toList],
+    [getFeildError, _toList],
   );
 
   /**
@@ -332,13 +329,13 @@ function useForm(options: Options = {}) {
    */
   const validateFeilds = useCallback(
     async function validateFeilds(ids?: string | string[]): Promise<boolean> {
-      const idList = toList(ids);
+      const idList = _toList(ids);
       const resultList = await Promise.all(
         idList.map(id => _validateFeild(id)),
       );
       return resultList.some(passed => !passed) ? false : true;
     },
-    [toList, _validateFeild],
+    [_toList, _validateFeild],
   );
 
   return {
