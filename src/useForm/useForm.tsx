@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 import { Handlers, Options, ValidateStatus } from './types';
@@ -73,33 +73,6 @@ function useForm(options: Options = {}) {
   );
 
   /**
-   * 获取校验给定值的结果
-   * @param id
-   * @param value
-   */
-  const _getValidateResult = useCallback(
-    function getValidateResult(id: string, value: any) {
-      return new Observable<string>(subscriber => {
-        const { validator } = strictOptions[id];
-
-        // 设置校验状态为校验中
-        setFeildValidateStatus(id, 'validating');
-        // 先暂时重置表单的错误信息
-        setFeildError(id, '');
-
-        Promise.resolve(validator(value))
-          .then(error => {
-            subscriber.next(error ? error : '');
-          })
-          .finally(() => {
-            subscriber.complete();
-          });
-      });
-    },
-    [setFeildError, setFeildValidateStatus, strictOptions],
-  );
-
-  /**
    * 校验给定的值
    * @param id 表单域的 ID
    * @param eventSubject 用来获取被校验的值
@@ -107,15 +80,25 @@ function useForm(options: Options = {}) {
   const _subscribeToValidate = useCallback(
     function subscribeToValidate(id: string, eventSubject: Observable<any>) {
       eventSubject
-        .pipe(switchMap(value => _getValidateResult(id, value)))
+        .pipe(
+          switchMap(value => {
+            const { validator } = strictOptions[id];
+            // 设置校验状态为校验中
+            setFeildValidateStatus(id, 'validating');
+            // 先暂时重置表单的错误信息
+            setFeildError(id, '');
+
+            return from(Promise.resolve(validator(value)));
+          }),
+        )
         .subscribe(validateResult => {
           // 保存校验结果
-          setFeildError(id, validateResult);
+          setFeildError(id, validateResult ? validateResult : '');
           // 根据校验结果设置校验状态
           setFeildValidateStatus(id, validateResult ? 'error' : 'success');
         });
     },
-    [_getValidateResult, setFeildError, setFeildValidateStatus],
+    [setFeildError, setFeildValidateStatus, strictOptions],
   );
 
   /**
