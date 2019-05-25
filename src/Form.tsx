@@ -1,5 +1,11 @@
 import React, { MouseEvent, useMemo } from 'react';
-import { TextField, Button, CircularProgress } from '@material-ui/core';
+import {
+  TextField,
+  Button,
+  CircularProgress,
+  makeStyles,
+  Paper,
+} from '@material-ui/core';
 import { useForm, Options } from './useForm';
 
 const mobileRegExp = /^(13[0-9]|14[579]|15[0-3,5-9]|16[6]|17[0135678]|18[0-9]|19[89])\d{8}$/;
@@ -17,6 +23,46 @@ function delay(time: number, data?: string): Promise<string> {
   });
 }
 
+const useStyles = makeStyles({
+  background: {
+    height: '100vh',
+    width: '100wh',
+    background: 'linear-gradient(to right, #232526, #414345)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  paper: {
+    minWidth: 500,
+    padding: 50,
+  },
+
+  form: {
+    display: 'grid',
+    gap: '30px',
+  },
+
+  validatingWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    '& > span': {
+      marginRight: 4,
+    },
+  },
+});
+
+function Validating() {
+  const { validatingWrap } = useStyles();
+
+  return (
+    <div className={validatingWrap}>
+      <span>校验中</span>
+      <CircularProgress size={12} />
+    </div>
+  );
+}
+
 interface FormProps {
   mobile: string;
 }
@@ -31,7 +77,7 @@ function Form({ mobile }: FormProps) {
             return '请输入手机号';
           }
 
-          await delay(Math.random() * 2000);
+          await delay((Math.random() + 1) * 2000);
           if (!mobileRegExp.test(value)) {
             return '手机号格式不正确';
           }
@@ -71,38 +117,43 @@ function Form({ mobile }: FormProps) {
     }
   }
 
+  const styles = useStyles();
+
   return (
-    <form>
-      <div>
-        <TextField
-          label="mobile"
-          {...useFeildProps('mobile')}
-          error={!!getFeildError('mobile')}
-          helperText={getFeildError('mobile')}
-        />
+    <div className={styles.background}>
+      <Paper className={styles.paper}>
+        <form className={styles.form}>
+          <TextField
+            label="mobile"
+            {...useFeildProps('mobile')}
+            error={!!getFeildError('mobile')}
+            FormHelperTextProps={{ component: 'div' }}
+            helperText={
+              getFeildValidateStatus('mobile') === 'validating' ? (
+                <Validating />
+              ) : (
+                getFeildError('mobile')
+              )
+            }
+            variant="outlined"
+            fullWidth
+          />
 
-        {getFeildValidateStatus('mobile') === 'validating' && (
-          <CircularProgress size={30} />
-        )}
-      </div>
+          <TextField
+            label="password"
+            {...useFeildProps('password')}
+            error={!!getFeildError('password')}
+            helperText={getFeildError('password')}
+            variant="outlined"
+            fullWidth
+          />
 
-      <div>
-        <TextField
-          label="password"
-          {...useFeildProps('password')}
-          error={!!getFeildError('password')}
-          helperText={getFeildError('password')}
-        />
-
-        {getFeildValidateStatus('password') === 'validating' && (
-          <CircularProgress size={30} />
-        )}
-      </div>
-
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
-        submit
-      </Button>
-    </form>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
+            submit
+          </Button>
+        </form>
+      </Paper>
+    </div>
   );
 }
 
