@@ -2,9 +2,7 @@
 
 这是一个使用 React Hooks 实现，用于简化表单状态管理和表单校验的库。
 
-## 示例
-
-[在线编辑](https://codesandbox.io/s/useform-lobw4?fontsize=14)
+## [示例](https://fujuntao.github.io/useForm)
 
 声明一个配置对象，该对象的 key 表示表单域的 ID，对应的 value 则是表单域的配置。
 
