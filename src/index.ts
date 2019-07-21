@@ -63,7 +63,11 @@ function getInitialState<FormFeildKey extends string>(
   const initialState = {} as FormState<FormFeildKey>;
   for (let key in config) {
     initialState[key] = {
-      value: config[key].initialValue,
+      value:
+        config[key].initialValue === null ||
+        config[key].initialValue === undefined
+          ? ''
+          : config[key].initialValue,
       error: '',
       validateStatus: 'none',
     };
@@ -110,7 +114,7 @@ function getStrictConfig<FormFeildKey extends string>(
 
 const timestamps: Timestamps = {};
 
-export default function useForm<FormFeildKey extends string>(
+export function useForm<FormFeildKey extends string>(
   config: Config<FormFeildKey>,
 ) {
   const initialState = useMemo(() => getInitialState(config), [config]);
@@ -223,7 +227,7 @@ export default function useForm<FormFeildKey extends string>(
     }
   }
 
-  function validateFeilds(ids: Ids) {
+  function validateFeilds(ids?: Ids) {
     const idList = _toList(ids);
     return Promise.all(
       idList.map(id => _validateFeild(id, getFeildValue(id))),
