@@ -7,7 +7,7 @@
 声明一个配置对象，该对象的 key 表示表单域的 ID，对应的 value 则是表单域的配置。
 
 ```typescript
-const options: Options = {
+const config = {
   mobile: {
     initialValue: '123456',
     validator: async (value: string) => {
@@ -43,7 +43,7 @@ function Form() {
     getFeildError,
     validateFeilds,
     getFeildsValue,
-  } = useForm(options);
+  } = useForm(config);
 
   async function handleSubmit(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -81,43 +81,33 @@ function Form() {
 
 ## API
 
-### `useForm(options)`
+### `useForm(config)`
 
 传入配置文件并执行，会返回用于获取相应表单域状态的函数。
 
-### `Options`
+### `Config`
 
 ```typescript
-interface Options {
-  [id: string]: Option;
+interface Config {
+  [id: string]: FormFeildConfig;
 }
 ```
 
-Options 是定义的表单配置。该配置对象的 `key` 表示表单域的 ID，`value` 则对应其配置。
+Config 是定义的表单配置。该配置对象的 `key` 表示表单域的 ID，`value` 则对应其配置。
 
 > 应保证表单域的 ID 不会重复，以免后面声明的配置覆盖了前面同名表单域的配置。
 
-### `Option`
+### `FormFeildConfig`
 
-```typescript
-interface Option {
-  initialValue?: any;
-  getValueFromEvent?: (e: any) => any;
-  collectValueTrigger?: string;
-  validator?: (
-    value: any,
-  ) => Promise<string | undefined | void> | string | undefined | void;
-  validateTriggers?: string | string[];
-}
-```
-
-Option 是单个表单域的配置，包含初始值、校验函数、触发校验的时机、收集值的时机等。
+单个表单域的配置，包含初始值、校验函数、触发校验的时机、收集值的时机等。
 
 下面是配置项的详细说明
 
 #### `initialValue`
 
 类型： `any`
+
+默认值： `''`
 
 表单域的初始值
 
@@ -131,7 +121,7 @@ Option 是单个表单域的配置，包含初始值、校验函数、触发校�
 
 类型： `string`
 
-默认值： `onChange`
+默认值： `'onChange'`
 
 表明在哪个事件中收集表单域的值。
 
@@ -149,7 +139,7 @@ Option 是单个表单域的配置，包含初始值、校验函数、触发校�
 
 默认值： `() => {}`
 
-用于校验用户输入的值。可以是一个普通函数，也可以是一个 async 函数。尽管可以使用普通函数，但表单校验统一采用异步校验的形式。该回调函数的参数是从校验事件中收集到的值。如果有返回值，则应该返回一个字符串，表明当前校验结果。如果不返回任何值，则表明校验通过。
+用于校验用户输入的值。可以是一个普通函数，也可以是一个 async 函数。尽管可以使用普通函数，但表单校验统一采用异步校验的形式。该回调函数的参数是表单状态中当前保存的值。如果有返回值，则应该返回一个字符串，表明当前校验结果。如果不返回任何值，或返回了“非字符串”或“空字符串”，则表明校验通过。
 
 ### 获取相应表单域状态的方法
 

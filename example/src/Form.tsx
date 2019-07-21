@@ -6,7 +6,7 @@ import {
   makeStyles,
   Paper,
 } from '@material-ui/core';
-import { useForm, Options } from './useForm';
+import { useForm } from '@fujuntao/use-form';
 
 const mobileRegExp = /^(13[0-9]|14[579]|15[0-3,5-9]|16[6]|17[0135678]|18[0-9]|19[89])\d{8}$/;
 
@@ -68,7 +68,7 @@ interface FormProps {
 }
 
 function Form({ mobile }: FormProps) {
-  const options = useMemo<Options>(
+  const config = useMemo(
     () => ({
       mobile: {
         initialValue: mobile,
@@ -86,7 +86,7 @@ function Form({ mobile }: FormProps) {
       },
 
       password: {
-        validator: value => {
+        validator: (value: any) => {
           if (!value) {
             return '请输入密码';
           }
@@ -103,7 +103,7 @@ function Form({ mobile }: FormProps) {
     getFeildError,
     validateFeilds,
     getFeildsValue,
-  } = useForm(options);
+  } = useForm(config);
 
   async function handleSubmit(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -148,7 +148,12 @@ function Form({ mobile }: FormProps) {
             fullWidth
           />
 
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={handleSubmit}
+          >
             submit
           </Button>
         </form>
