@@ -39,7 +39,7 @@ describe('getFeildsError tests', () => {
   });
 });
 
-describe('setFeildError', () => {
+describe('setFeildError tests', () => {
   const feild = {};
   const { result } = renderHook(() => useForm({ feild }));
 
