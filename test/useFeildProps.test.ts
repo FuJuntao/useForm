@@ -13,14 +13,14 @@ describe('useFeildProps tests', () => {
   });
 
   test('should return correct number of handlers when provide config', () => {
-    const { result } = renderHook(() => {
-      return useForm({
+    const { result } = renderHook(() =>
+      useForm({
         feild: {
           validateTriggers: ['onChange', 'onBlur'],
           collectValueTrigger: 'onChange',
         },
-      }).useFeildProps('feild');
-    });
+      }).useFeildProps('feild'),
+    );
 
     expect(result.current).toEqual(
       expect.objectContaining({
@@ -32,11 +32,9 @@ describe('useFeildProps tests', () => {
   });
 
   test("should collect value when 'collectValueTrigger' event is triggered", async () => {
-    const { result, waitForNextUpdate } = renderHook<{}, any>(() => {
-      return useForm({ feild: { getValueFromEvent: e => e } }).useFeildProps(
-        'feild',
-      );
-    });
+    const { result, waitForNextUpdate } = renderHook<{}, any>(() =>
+      useForm({ feild: { getValueFromEvent: e => e } }).useFeildProps('feild'),
+    );
     const value = 'hello world';
     act(() => {
       result.current.onChange(value);
@@ -47,19 +45,27 @@ describe('useFeildProps tests', () => {
   });
 
   test("should validate value when 'validateTriggers' event is triggered", async () => {
-    const mockValidator = jest.fn((value: string) => value);
-    const { result, waitForNextUpdate } = renderHook<{}, any>(() => {
-      return useForm({
-        feild: { getValueFromEvent: e => e, validator: mockValidator },
-      }).useFeildProps('feild');
-    });
+    const errorMessage = 'please enter something';
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useForm({
+        feild: {
+          getValueFromEvent: e => e,
+          validator: (value: string) =>
+            value.length === 0 ? errorMessage : '',
+        },
+      }),
+    );
+    const props = renderHook<unknown, any>(() =>
+      result.current.useFeildProps('feild'),
+    );
 
     act(() => {
-      result.current.onChange('change');
-      result.current.onChange('');
+      props.result.current.onChange('change');
+      props.result.current.onChange('');
     });
     await waitForNextUpdate();
 
-    expect(mockValidator.mock.calls.length).toBe(2);
+    expect(result.current.getFeildError('feild')).toBe(errorMessage);
+    expect(result.current.getFeildValidateStatus('feild')).toBe('error');
   });
 });
