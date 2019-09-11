@@ -31,7 +31,7 @@ describe('useFeildProps tests', () => {
     );
   });
 
-  test("should collect value when 'collectValueTrigger' event is triggered", async () => {
+  test("should collect value when event specified in 'collectValueTrigger' is triggered", async () => {
     const { result, waitForNextUpdate } = renderHook<{}, any>(() =>
       useForm({ feild: { getValueFromEvent: e => e } }).useFeildProps('feild'),
     );
@@ -44,28 +44,69 @@ describe('useFeildProps tests', () => {
     expect(result.current.value).toBe(value);
   });
 
-  test("should validate value when 'validateTriggers' event is triggered", async () => {
+  test("should validate value when event specified in 'validateTriggers' is triggered", async () => {
+    expect.assertions(2);
     const errorMessage = 'please enter something';
-    const { result, waitForNextUpdate } = renderHook(() =>
+    const { result: useFormResult, waitForNextUpdate } = renderHook(() =>
       useForm({
         feild: {
+          initialValue: 'abc',
           getValueFromEvent: e => e,
           validator: (value: string) =>
             value.length === 0 ? errorMessage : '',
         },
       }),
     );
-    const props = renderHook<unknown, any>(() =>
-      result.current.useFeildProps('feild'),
+    const { result: useFeildPropsResult } = renderHook<unknown, any>(() =>
+      useFormResult.current.useFeildProps('feild'),
     );
 
     act(() => {
-      props.result.current.onChange('change');
-      props.result.current.onChange('');
+      useFeildPropsResult.current.onChange('');
     });
     await waitForNextUpdate();
 
-    expect(result.current.getFeildError('feild')).toBe(errorMessage);
-    expect(result.current.getFeildValidateStatus('feild')).toBe('error');
+    expect(useFormResult.current.getFeildError('feild')).toBe(errorMessage);
+    expect(useFormResult.current.getFeildValidateStatus('feild')).toBe('error');
+  });
+
+  test('should only apply result from the last validate request', async () => {
+    expect.assertions(1);
+    const { result: useFormResult, waitForNextUpdate } = renderHook(() =>
+      useForm({
+        feild: {
+          getValueFromEvent: e => e,
+          validator: (value: string) => {
+            return new Promise(resolve => {
+              setTimeout(
+                () => {
+                  resolve(value);
+                },
+                // When pass string '1', it will wait for 5ms to return a result
+                // otherwise, it will wait for 0ms to return a result asynchronously
+                value === '1' ? 5 : 0,
+              );
+            });
+          },
+        },
+      }),
+    );
+    const { result: useFeildPropsResult } = renderHook<unknown, any>(() =>
+      useFormResult.current.useFeildProps('feild'),
+    );
+
+    act(() => {
+      useFeildPropsResult.current.onChange('1');
+    });
+    await waitForNextUpdate();
+    act(() => {
+      useFeildPropsResult.current.onChange('2');
+    });
+    await waitForNextUpdate();
+
+    // request for validating value '1' first, then call for value '2'
+    // '1's validate result comes later than '2's
+    // it should be result from validating value '2' to be applied
+    expect(useFormResult.current.getFeildError('feild')).toBe('2');
   });
 });
