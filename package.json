@@ -2,21 +2,26 @@
   "name": "@fujuntao/use-form",
   "version": "0.2.0",
   "description": "",
+  "keywords": [],
+  "author": "FuJuntao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FuJuntao/useForm.git"
+  },
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib/**/*"
   ],
-  "keywords": [],
-  "author": "FuJuntao",
-  "license": "MIT",
   "scripts": {
     "test": "jest",
     "build": "tsc --build tsconfig.json"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/FuJuntao/useForm.git"
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn test"
+    }
   },
   "dependencies": {
     "tslib": "^1.10.0"
@@ -26,6 +31,7 @@
     "@types/jest": "^24.0.18",
     "@types/react": "^16.9.2",
     "@types/react-dom": "^16.9.0",
+    "husky": "^3.0.5",
     "jest": "^24.9.0",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
