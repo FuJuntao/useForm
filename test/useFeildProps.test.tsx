@@ -1,5 +1,7 @@
+import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useForm } from '../src/index';
+import { render, fireEvent, wait } from '@testing-library/react';
 
 describe('useFeildProps tests', () => {
   test('should have default value when not provide any config', async () => {
@@ -70,43 +72,52 @@ describe('useFeildProps tests', () => {
     expect(useFormResult.current.getFeildValidateStatus('feild')).toBe('error');
   });
 
+  function Input() {
+    const { useFeildProps, getFeildError } = useForm({
+      feild: {
+        validator: (value: string) => {
+          return new Promise(resolve => {
+            setTimeout(
+              () => {
+                resolve(value);
+              },
+              // When pass string '1', it will wait for 5ms to return a result
+              // otherwise, it will wait for 0ms to return a result asynchronously
+              value === '1' ? 5 : 0,
+            );
+          });
+        },
+      },
+    });
+
+    return (
+      <div>
+        <input {...useFeildProps('feild')} data-testid="input" />
+        <p data-testid="error">{getFeildError('feild')}</p>
+      </div>
+    );
+  }
+
   test('should only apply result from the last validate request', async () => {
     expect.assertions(1);
-    const { result: useFormResult, waitForNextUpdate } = renderHook(() =>
-      useForm({
-        feild: {
-          getValueFromEvent: e => e,
-          validator: (value: string) => {
-            return new Promise(resolve => {
-              setTimeout(
-                () => {
-                  resolve(value);
-                },
-                // When pass string '1', it will wait for 5ms to return a result
-                // otherwise, it will wait for 0ms to return a result asynchronously
-                value === '1' ? 5 : 0,
-              );
-            });
-          },
-        },
-      }),
-    );
-    const { result: useFeildPropsResult } = renderHook<unknown, any>(() =>
-      useFormResult.current.useFeildProps('feild'),
-    );
 
-    act(() => {
-      useFeildPropsResult.current.onChange('1');
-    });
-    await waitForNextUpdate();
-    act(() => {
-      useFeildPropsResult.current.onChange('2');
-    });
-    await waitForNextUpdate();
+    const { getByTestId } = render(<Input />);
+
+    fireEvent.change(getByTestId('input'), { target: { value: '1' } });
+    fireEvent.change(getByTestId('input'), { target: { value: '2' } });
+
+    await wait(
+      () =>
+        new Promise(resolve => {
+          setTimeout(() => {
+            resolve();
+          }, 60);
+        }),
+    );
 
     // request for validating value '1' first, then call for value '2'
     // '1's validate result comes later than '2's
     // it should be result from validating value '2' to be applied
-    expect(useFormResult.current.getFeildError('feild')).toBe('2');
+    expect(getByTestId('error').innerHTML).toBe('2');
   });
 });
