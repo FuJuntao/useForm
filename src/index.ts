@@ -83,6 +83,10 @@ function defaultGetValueFromEvent(e: ChangeEvent<HTMLInputElement>) {
   return target.type === 'checkbox' ? target.checked : target.value;
 }
 
+function defaultValidator(value: any) {
+  return '';
+}
+
 function getStrictConfig<FormFeildKey extends string>(
   config: Config<FormFeildKey>,
 ): StrictConfig<FormFeildKey> {
@@ -91,7 +95,7 @@ function getStrictConfig<FormFeildKey extends string>(
     ([
       key,
       {
-        validator = () => {},
+        validator = defaultValidator,
         validateTriggers = ['onChange'],
         getValueFromEvent = defaultGetValueFromEvent,
         collectValueTrigger = 'onChange',
