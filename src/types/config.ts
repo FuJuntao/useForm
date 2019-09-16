@@ -3,7 +3,7 @@ export type Validator = (
 ) => Promise<string | undefined | void> | string | undefined | void;
 
 export type Config<FormFeildKey extends string> = {
-  [key in FormFeildKey]: FormFeildConfig
+  [key in FormFeildKey]: FormFeildConfig;
 };
 
 export interface FormFeildConfig {
@@ -20,7 +20,7 @@ export interface FormFeildConfig {
 }
 
 export type StrictConfig<FormFeildKey extends string> = {
-  [key in FormFeildKey]: StrictFormFeildConfig
+  [key in FormFeildKey]: StrictFormFeildConfig;
 };
 
 interface StrictFormFeildConfig {
