@@ -1,0 +1,14 @@
+name: Pull Request
+
+on: [push, pull_request]
+
+jobs:
+  run-test:
+    name: Run Test
+    setps:
+      - name: Install dependencies
+        run: |
+          yarn install
+      - name: Test
+        run: |
+          yarn test
