@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   run-test:
     name: Run Test
+    runs-on: ubuntu-18.04
     steps:
       - name: Install dependencies
         run: |
