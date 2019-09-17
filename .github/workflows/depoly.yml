@@ -5,8 +5,7 @@ on:
     branches: master
 
 jobs:
-  run-test:
-    name: Run Test
+  deploy:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
