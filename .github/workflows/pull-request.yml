@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   run-test:
     name: Run Test
-    setps:
+    steps:
       - name: Install dependencies
         run: |
           yarn install
