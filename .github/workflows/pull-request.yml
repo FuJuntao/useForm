@@ -7,9 +7,6 @@ jobs:
     name: Run Test
     runs-on: ubuntu-18.04
     steps:
-      - name: Install dependencies
-        run: |
-          yarn install
-      - name: Test
-        run: |
-          yarn test
+      - use: actions/checkout@actions
+      - run: yarn install
+      - run: yarn test
