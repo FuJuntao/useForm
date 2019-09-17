@@ -1,0 +1,23 @@
+name: Deploy to Github Pages
+
+on:
+  push:
+    branches: actions
+  pull_request:
+    branches: actions
+
+jobs:
+  run-test:
+    name: Run Test
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - run: yarn install
+      - run: yarn test
+      - run: cd ./example && yarn build
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@master
+        env:
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./example/build
