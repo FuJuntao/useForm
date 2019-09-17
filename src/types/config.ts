@@ -2,11 +2,11 @@ export type Validator = (
   value: any,
 ) => Promise<string | undefined | void> | string | undefined | void;
 
-export type Config<FormFeildKey extends string> = {
-  [key in FormFeildKey]: FormFeildConfig;
+export type Config<FormFieldKey extends string> = {
+  [key in FormFieldKey]: FormFieldConfig;
 };
 
-export interface FormFeildConfig {
+export interface FormFieldConfig {
   // 表单域的初始值
   initialValue?: any;
   // 如何从事件处理器中取到值
@@ -19,11 +19,11 @@ export interface FormFeildConfig {
   validateTriggers?: string | string[];
 }
 
-export type StrictConfig<FormFeildKey extends string> = {
-  [key in FormFeildKey]: StrictFormFeildConfig;
+export type StrictConfig<FormFieldKey extends string> = {
+  [key in FormFieldKey]: StrictFormFieldConfig;
 };
 
-interface StrictFormFeildConfig {
+interface StrictFormFieldConfig {
   // 如何从事件处理器中取到值
   getValueFromEvent: (e: any) => any;
   // 收集值的时机

@@ -3,7 +3,7 @@ import {
   FormState,
   Config,
   StrictConfig,
-  FormFeildConfig,
+  FormFieldConfig,
   Actions,
   SET_VALUE,
   ValidateStatus,
@@ -13,10 +13,10 @@ import {
   Timestamps,
 } from './types';
 
-function reducer<FormFeildKey extends string>(
-  state: FormState<FormFeildKey>,
-  action: Actions<FormFeildKey>,
-): FormState<FormFeildKey> {
+function reducer<FormFieldKey extends string>(
+  state: FormState<FormFieldKey>,
+  action: Actions<FormFieldKey>,
+): FormState<FormFieldKey> {
   switch (action.type) {
     case SET_VALUE: {
       const { id, value } = action;
@@ -57,10 +57,10 @@ function reducer<FormFeildKey extends string>(
   }
 }
 
-function getInitialState<FormFeildKey extends string>(
-  config: Config<FormFeildKey>,
-): FormState<FormFeildKey> {
-  const initialState = {} as FormState<FormFeildKey>;
+function getInitialState<FormFieldKey extends string>(
+  config: Config<FormFieldKey>,
+): FormState<FormFieldKey> {
+  const initialState = {} as FormState<FormFieldKey>;
   for (let key in config) {
     initialState[key] = {
       value:
@@ -87,11 +87,11 @@ function defaultValidator(value: any) {
   return '';
 }
 
-function getStrictConfig<FormFeildKey extends string>(
-  config: Config<FormFeildKey>,
-): StrictConfig<FormFeildKey> {
-  const strictConfig = {} as StrictConfig<FormFeildKey>;
-  Object.entries<FormFeildConfig>(config).forEach(
+function getStrictConfig<FormFieldKey extends string>(
+  config: Config<FormFieldKey>,
+): StrictConfig<FormFieldKey> {
+  const strictConfig = {} as StrictConfig<FormFieldKey>;
+  Object.entries<FormFieldConfig>(config).forEach(
     ([
       key,
       {
@@ -101,7 +101,7 @@ function getStrictConfig<FormFeildKey extends string>(
         collectValueTrigger = 'onChange',
       },
     ]) => {
-      const typedKey = key as Extract<FormFeildKey, string>;
+      const typedKey = key as Extract<FormFieldKey, string>;
       strictConfig[typedKey] = {
         getValueFromEvent,
         collectValueTrigger,
@@ -118,35 +118,35 @@ function getStrictConfig<FormFeildKey extends string>(
 
 const timestamps: Timestamps = {};
 
-export function useForm<FormFeildKey extends string>(
-  config: Config<FormFeildKey>,
+export function useForm<FormFieldKey extends string>(
+  config: Config<FormFieldKey>,
 ) {
   const initialState = useMemo(() => getInitialState(config), [config]);
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const strictConfig = useMemo(() => getStrictConfig(config), [config]);
 
-  type Ids = FormFeildKey | FormFeildKey[];
+  type Ids = FormFieldKey | FormFieldKey[];
 
-  function _toList(ids?: Ids): FormFeildKey[] {
+  function _toList(ids?: Ids): FormFieldKey[] {
     if (typeof ids === 'string') {
       return [ids];
     }
     if (typeof ids === 'undefined') {
-      return Object.keys(config) as FormFeildKey[];
+      return Object.keys(config) as FormFieldKey[];
     }
     return ids;
   }
 
-  function setFeildValue(id: FormFeildKey, value: any): void {
+  function setFieldValue(id: FormFieldKey, value: any): void {
     dispatch({ type: 'SET_VALUE', id, value });
   }
 
-  function setFeildError(id: FormFeildKey, error?: string): void {
+  function setFieldError(id: FormFieldKey, error?: string): void {
     dispatch({ type: 'SET_ERROR', id, error: error ? error : '' });
   }
 
-  function setFeildValidateStatus(id: FormFeildKey, status: ValidateStatus) {
+  function setFieldValidateStatus(id: FormFieldKey, status: ValidateStatus) {
     dispatch({
       type: 'SET_VALIDATE_STATUS',
       id,
@@ -154,32 +154,32 @@ export function useForm<FormFeildKey extends string>(
     });
   }
 
-  function getFeildValue(id: FormFeildKey) {
+  function getFieldValue(id: FormFieldKey) {
     const { value } = state[id];
     return value;
   }
 
-  function getFeildsValue(ids?: Ids) {
+  function getFieldsValue(ids?: Ids) {
     const idList = _toList(ids);
-    const values = {} as { [id in FormFeildKey]: any };
+    const values = {} as { [id in FormFieldKey]: any };
     idList.forEach(id => {
-      values[id] = getFeildValue(id);
+      values[id] = getFieldValue(id);
     });
     return values;
   }
 
-  function getFeildError(id: FormFeildKey): string {
+  function getFieldError(id: FormFieldKey): string {
     const { error } = state[id];
     return error;
   }
 
-  function getFeildsError(ids?: Ids) {
+  function getFieldsError(ids?: Ids) {
     const idList = _toList(ids);
-    const errors = {} as { [id in FormFeildKey]: string };
+    const errors = {} as { [id in FormFieldKey]: string };
     let noErrors = true;
 
     idList.forEach(id => {
-      const error = getFeildError(id);
+      const error = getFieldError(id);
       if (error) {
         noErrors = false;
       }
@@ -189,7 +189,7 @@ export function useForm<FormFeildKey extends string>(
     return noErrors ? null : errors;
   }
 
-  function getFeildValidateStatus(id: FormFeildKey) {
+  function getFieldValidateStatus(id: FormFieldKey) {
     const { validateStatus } = state[id];
     return validateStatus;
   }
@@ -207,15 +207,15 @@ export function useForm<FormFeildKey extends string>(
     }
   }
 
-  function _validateFeild(id: FormFeildKey, value: any): Promise<boolean> {
+  function _validateField(id: FormFieldKey, value: any): Promise<boolean> {
     const { error, validateStatus } = state[id];
     const { validator } = strictConfig[id];
 
     if (validateStatus !== 'none' && error) {
       return Promise.resolve(false);
     } else {
-      setFeildValidateStatus(id, 'validating');
-      setFeildError(id, '');
+      setFieldValidateStatus(id, 'validating');
+      setFieldError(id, '');
 
       const now = new Date().getTime();
       timestamps[id] = now;
@@ -223,22 +223,22 @@ export function useForm<FormFeildKey extends string>(
       return _getValidateResult(validator, value).then(result => {
         const validateTimestamp = timestamps[id];
         if (now == validateTimestamp) {
-          setFeildError(id, result);
-          setFeildValidateStatus(id, result ? 'error' : 'success');
+          setFieldError(id, result);
+          setFieldValidateStatus(id, result ? 'error' : 'success');
         }
         return result ? false : true;
       });
     }
   }
 
-  function validateFeilds(ids?: Ids) {
+  function validateFields(ids?: Ids) {
     const idList = _toList(ids);
     return Promise.all(
-      idList.map(id => _validateFeild(id, getFeildValue(id))),
+      idList.map(id => _validateField(id, getFieldValue(id))),
     ).then(resultList => (resultList.some(passed => !passed) ? false : true));
   }
 
-  function _createHandlers(id: FormFeildKey) {
+  function _createHandlers(id: FormFieldKey) {
     const {
       collectValueTrigger,
       getValueFromEvent,
@@ -251,7 +251,7 @@ export function useForm<FormFeildKey extends string>(
       if (item && item !== collectValueTrigger) {
         handlers[item] = e => {
           const value = getValueFromEvent(e);
-          _validateFeild(id, value);
+          _validateField(id, value);
         };
       }
     });
@@ -262,32 +262,32 @@ export function useForm<FormFeildKey extends string>(
     handlers[collectValueTrigger] = validateValueInCollectValueTrigger
       ? e => {
           const value = getValueFromEvent(e);
-          setFeildValue(id, value);
-          _validateFeild(id, value);
+          setFieldValue(id, value);
+          _validateField(id, value);
         }
       : e => {
           const value = getValueFromEvent(e);
-          setFeildValue(id, value);
+          setFieldValue(id, value);
         };
 
     return handlers;
   }
 
-  function useFeildProps(id: FormFeildKey) {
+  function useFieldProps(id: FormFieldKey) {
     const handlers = useMemo(() => _createHandlers(id), [id]);
-    return { value: getFeildValue(id), ...handlers };
+    return { value: getFieldValue(id), ...handlers };
   }
 
   return {
-    setFeildValue,
-    setFeildError,
-    setFeildValidateStatus,
-    getFeildValue,
-    getFeildsValue,
-    getFeildError,
-    getFeildsError,
-    getFeildValidateStatus,
-    validateFeilds,
-    useFeildProps,
+    setFieldValue,
+    setFieldError,
+    setFieldValidateStatus,
+    getFieldValue,
+    getFieldsValue,
+    getFieldError,
+    getFieldsError,
+    getFieldValidateStatus,
+    validateFields,
+    useFieldProps,
   };
 }

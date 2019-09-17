@@ -98,21 +98,21 @@ function Form({ mobile }: FormProps) {
   );
 
   const {
-    useFeildProps,
-    getFeildValidateStatus,
-    getFeildError,
-    validateFeilds,
-    getFeildsValue,
+    useFieldProps,
+    getFieldValidateStatus,
+    getFieldError,
+    validateFields,
+    getFieldsValue,
   } = useForm(config);
 
   async function handleSubmit(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
 
-    const isFormValide = await validateFeilds();
+    const isFormValide = await validateFields();
     console.log(`表单校验是否通过：${isFormValide}`);
 
     if (isFormValide) {
-      const values = getFeildsValue();
+      const values = getFieldsValue();
       console.log('表单值：', values);
     }
   }
@@ -125,14 +125,14 @@ function Form({ mobile }: FormProps) {
         <form className={styles.form}>
           <TextField
             label="mobile"
-            {...useFeildProps('mobile')}
-            error={!!getFeildError('mobile')}
+            {...useFieldProps('mobile')}
+            error={!!getFieldError('mobile')}
             FormHelperTextProps={{ component: 'div' }}
             helperText={
-              getFeildValidateStatus('mobile') === 'validating' ? (
+              getFieldValidateStatus('mobile') === 'validating' ? (
                 <Validating />
               ) : (
-                getFeildError('mobile')
+                getFieldError('mobile')
               )
             }
             variant="outlined"
@@ -141,9 +141,9 @@ function Form({ mobile }: FormProps) {
 
           <TextField
             label="password"
-            {...useFeildProps('password')}
-            error={!!getFeildError('password')}
-            helperText={getFeildError('password')}
+            {...useFieldProps('password')}
+            error={!!getFieldError('password')}
+            helperText={getFieldError('password')}
             variant="outlined"
             fullWidth
           />

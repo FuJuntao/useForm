@@ -1,10 +1,10 @@
 export type ValidateStatus = 'none' | 'validating' | 'success' | 'error';
 
-export type FormState<FormFeildKey extends string> = {
-  [key in FormFeildKey]: FormFeildState;
+export type FormState<FormFieldKey extends string> = {
+  [key in FormFieldKey]: FormFieldState;
 };
 
-interface FormFeildState {
+interface FormFieldState {
   value: any;
   error: string;
   validateStatus: ValidateStatus;

@@ -1,28 +1,28 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useForm } from '../src/index';
 
-describe('validateFeilds tests', () => {
-  const feild1ErrorMessage = 'please enter something';
-  const feild1 = {
+describe('validateFields tests', () => {
+  const field1ErrorMessage = 'please enter something';
+  const field1 = {
     initialValue: '',
     validator: (value: string) =>
-      value.length === 0 ? feild1ErrorMessage : '',
+      value.length === 0 ? field1ErrorMessage : '',
   };
-  const feild2ErrorMessage = 'please enter more than 3 characters';
-  const feild2 = {
+  const field2ErrorMessage = 'please enter more than 3 characters';
+  const field2 = {
     initialValue: 'abcd',
-    validator: (value: string) => (value.length > 3 ? '' : feild2ErrorMessage),
+    validator: (value: string) => (value.length > 3 ? '' : field2ErrorMessage),
   };
 
   test('should return correct result after validating', async () => {
     expect.assertions(1);
     const { result, waitForNextUpdate } = renderHook(() =>
-      useForm({ feild1, feild2 }),
+      useForm({ field1, field2 }),
     );
 
     let validateResult;
     act(() => {
-      result.current.validateFeilds(['feild1', 'feild2']).then(result => {
+      result.current.validateFields(['field1', 'field2']).then(result => {
         validateResult = result;
       });
     });
@@ -31,15 +31,15 @@ describe('validateFeilds tests', () => {
     expect(validateResult).toBe(false);
   });
 
-  test('should validate all feilds when not provide any id', async () => {
+  test('should validate all fields when not provide any id', async () => {
     expect.assertions(1);
     const { result, waitForNextUpdate } = renderHook(() =>
-      useForm({ feild1, feild2 }),
+      useForm({ field1, field2 }),
     );
 
     let validateResult;
     act(() => {
-      result.current.validateFeilds().then(result => {
+      result.current.validateFields().then(result => {
         validateResult = result;
       });
     });
@@ -50,26 +50,26 @@ describe('validateFeilds tests', () => {
 
   test("validate status should be 'validating' when being validated", async () => {
     expect.assertions(2);
-    const { result, waitForNextUpdate } = renderHook(() => useForm({ feild1 }));
+    const { result, waitForNextUpdate } = renderHook(() => useForm({ field1 }));
 
     act(() => {
-      result.current.validateFeilds('feild1');
+      result.current.validateFields('field1');
     });
 
-    expect(result.current.getFeildValidateStatus('feild1')).toBe('validating');
+    expect(result.current.getFieldValidateStatus('field1')).toBe('validating');
     await waitForNextUpdate();
-    expect(result.current.getFeildValidateStatus('feild1')).toBe('error');
+    expect(result.current.getFieldValidateStatus('field1')).toBe('error');
   });
 
   test('should change validate status after validation', async () => {
     expect.assertions(1);
-    const { result, waitForNextUpdate } = renderHook(() => useForm({ feild1 }));
+    const { result, waitForNextUpdate } = renderHook(() => useForm({ field1 }));
 
     act(() => {
-      result.current.validateFeilds('feild1');
+      result.current.validateFields('field1');
     });
     await waitForNextUpdate();
 
-    expect(result.current.getFeildValidateStatus('feild1')).toBe('error');
+    expect(result.current.getFieldValidateStatus('field1')).toBe('error');
   });
 });
