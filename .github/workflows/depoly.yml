@@ -14,7 +14,12 @@ jobs:
       - uses: actions/checkout@master
       - run: yarn install
       - run: yarn test
-      - run: cd ./example && yarn install && yarn build
+
+      - run: cd ./example
+      - run: yarn install
+      - run: yarn build
+        env:
+          SKIP_PREFLIGHT_CHECK: true
       - name: Deploy
         uses: peaceiris/actions-gh-pages@master
         env:
