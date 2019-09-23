@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@fujuntao/use-form": "^0.2.0",
-    "@material-ui/core": "^4.4.1",
+    "@fujuntao/use-form": "^0.2.2",
+    "@material-ui/core": "^4.4.3",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "react-scripts": "3.1.1"
+    "react-scripts": "3.1.2"
   },
   "devDependencies": {
     "@types/react": "^16.9.2",
     "@types/react-dom": "^16.9.0",
     "gh-pages": "^2.1.1",
-    "typescript": "^3.6.2"
+    "typescript": "^3.6.3"
   },
   "scripts": {
     "start": "react-scripts start",
