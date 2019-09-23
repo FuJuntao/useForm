@@ -1,12 +1,20 @@
 # useForm
 
-这是一个使用 React Hooks 实现，用于简化表单状态管理和表单校验的库。
+A custom hook to help validate from fields and manage form state.
 
-## [示例](https://fujuntao.github.io/useForm)
+## Features
 
-声明一个配置对象，该对象的 key 表示表单域的 ID，对应的 value 则是表单域的配置。
+- Using `useReducer` with `Context` to store form state
 
-```typescript
+- Easy to set and query any form field's state
+
+- Validate multiple form fields automatically or manually
+
+- Async validation
+
+## Example
+
+```javascript
 const config = {
   mobile: {
     initialValue: '123456',
@@ -31,28 +39,23 @@ const config = {
     validateTriggers: ['onBlur', 'onChange'],
   },
 };
-```
 
-将配置对象作为参数传递给 `useForm` 方法，以获取相应的方法。
-使用 ID 作为参数，调用这些方法，获取对应表单域的状态。
-
-```typescript
 function Form() {
   const {
-    useFeildProps,
-    getFeildError,
-    validateFeilds,
-    getFeildsValue,
+    useFieldProps,
+    getFieldError,
+    validateFields,
+    getFieldsValue,
   } = useForm(config);
 
   async function handleSubmit(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
 
-    // validate all feilds' value
-    const isFormValide = await validateFeilds();
+    // validate all fields' values
+    const isFormValide = await validateFields();
 
     if (isFormValide) {
-      const values = getFeildsValue();
+      const values = getFieldsValue();
       console.log('Form values: ', values);
     }
   }
@@ -61,16 +64,16 @@ function Form() {
     <form>
       <div>
         <label>
-          mobile: <input {...useFeildProps('mobile')} />
+          mobile: <input {...useFieldProps('mobile')} />
         </label>
-        {getFeildError('mobile') && <p>{getFeildError('mobile')}</p>}
+        {getFieldError('mobile') && <p>{getFieldError('mobile')}</p>}
       </div>
 
       <div>
         <label>
-          password: <input {...useFeildProps('password')} />
+          password: <input {...useFieldProps('password')} />
         </label>
-        {getFeildError('password') && <p>{getFeildError('password')}</p>}
+        {getFieldError('password') && <p>{getFieldError('password')}</p>}
       </div>
 
       <button onClick={handleSubmit}>submit</button>
@@ -81,131 +84,126 @@ function Form() {
 
 ## API
 
-### `useForm(config)`
+### Config
 
-传入配置文件并执行，会返回用于获取相应表单域状态的函数。
+```javascript
+const config = {
+  // Every key of the `config` object is the unique identifier for one form field
+  formFieldId: {
+    // Initial value of this field
+    initialValue: '',
 
-### `Config`
+    // `getValueFromEvent` indicates how to retrieve value from triggers
+    //  which are defined below in `collectValueTrigger` and `validateTriggers`
+    getValueFromEvent: e => {
+      if (!e || !e.target) {
+        return e;
+      }
+      const { target } = e;
+      return target.type === 'checkbox' ? target.checked : target.value;
+    },
 
-```typescript
-interface Config {
-  [id: string]: FormFeildConfig;
-}
+    // `collectValueTrigger` is a user defined event
+    // indicates in which event should the value be collected and stored in the form state
+    collectValueTrigger: 'onChange',
+
+    // `validator` is a function takes this form field's value as argument
+    // and returns a string synchronously or asynchronously as the result of the validation
+    // if the result is an empty string or not a string, then the validation is considered to be passed
+    // the validation result will be stored in the form state
+    // this function will be called when events defined below in `validateTriggers` are triggered
+    validator: value => '',
+
+    // `validateTriggers` is a string or an array contains user defined events
+    //  indicates in which event or events should call validator function
+    validateTriggers: ['onChange'],
+  },
+};
 ```
 
-Config 是定义的表单配置。该配置对象的 `key` 表示表单域的 ID，`value` 则对应其配置。
+### Functions
 
-> 应保证表单域的 ID 不会重复，以免后面声明的配置覆盖了前面同名表单域的配置。
+When `useForm` is called with `config` as argument, it will return an object contains functions ( listed down below ) that can be used to set and query form state, generate event handlers, perform validation.
 
-### `FormFeildConfig`
+#### setFieldValue
 
-单个表单域的配置，包含初始值、校验函数、触发校验的时机、收集值的时机等。
+type: `(id: FormFieldId, value: any) => void`
 
-下面是配置项的详细说明
+Set value of the given form field.
 
-#### `initialValue`
+#### getFieldValue
 
-类型： `any`
+type: `(id: FormFieldId) => any`
 
-默认值： `''`
+Returns the value of the given form field.
 
-表单域的初始值
+#### getFieldsValue
 
-#### `getValueFromEvent`
+type: `(ids?: FormFieldId | FormFieldId[]) => { [id: FormFieldId]: any }`
 
-类型： `(e: any) => any`
+Returns an object contains one or multiple fields' values.
+if not provide with any argument, then all fields' values will be returned.
 
-表明如何在 `collectValueTrigger` 和 `validateTriggers` 声明的事件中取值。
+#### setFieldError
 
-#### `collectValueTrigger`
+type: `(id: FormFieldId, error?: string) => void`
 
-类型： `string`
+Set error message of the given field.
 
-默认值： `'onChange'`
+#### getFieldError
 
-表明在哪个事件中收集表单域的值。
+type: `(id: FormFieldId) => string`
 
-#### `validateTriggers`
+Returns the error message of the given field.
 
-类型： `string | string[]`
+#### getFieldsError
 
-默认值： `['onChange']`
+type: `(ids?: FormFieldId | FormFieldId[]) => { [id: FormFieldId]: { error: string } } | null`
 
-表明在什么事件中触发表单域的校验。
+Returns an object contains one or multiple fields' error messages.
+if not provide with any argument, then all fields' error messages will be returned.
+if there are no error messages in any of the given fields, then `null` will be returned.
 
-#### `validator`
+#### setFieldValidateStatus
 
-类型： `( value: any ) => Promise<string | undefined | void> | string | undefined | void`
+type: `(id: FormFieldId, status: 'none' | 'validating' | 'success' | 'error') => void`
 
-默认值： `() => {}`
+Set validation status of the given field.
 
-用于校验用户输入的值。可以是一个普通函数，也可以是一个 async 函数。尽管可以使用普通函数，但表单校验统一采用异步校验的形式。该回调函数的参数是表单状态中当前保存的值。如果有返回值，则应该返回一个字符串，表明当前校验结果。如果不返回任何值，或返回了“非字符串”或“空字符串”，则表明校验通过。
+Validation status could only be one of the following values:
 
-### 获取相应表单域状态的方法
+- `none` This field's value has never been validated.
+- `validating` This field's value is being validated.
+- `success` This field's value has been validated, and the validation is passed.
+- `error` This field's value has been validated, and the validation is not passed, an error message should have been returned.
 
-调用 `useForm` 后，会返回一个对象，其中包含了以下方法：
+#### getFieldValidateStatus
 
-#### `setFeildValue`
+type: `(id: FormFieldId) => 'none' | 'validating' | 'success' | 'error'`
 
-类型： `(id: string, value: any) => void`
+Returns the validation status of the given field.
 
-设置单个表单域的值。
+#### validateFields
 
-#### `getFeildValue`
+type: `(ids?: FormFieldId | FormFieldId[]) => Promise<boolean>`
 
-类型： `(id: string): any`
+Validate one or multiple fields' values asynchronously.
+If not provide with any argument, then all fields will be validated.
+If all fields' validation are passed, return `true`, otherwise return `false`.
 
-获取单个表单域的值。
+#### useFieldProps
 
-#### `getFeildsValue`
+type: `(id: FormFieldId) => { value: any; [handler: string]: (e: any) => void }`
 
-类型： `(ids?: string | string[]) => { [id: string]: any }`
+A custom hook returns a given field's value and all its event handlers.
+The typical use of this function is by using speard operator to pass field's value and its event handlers to a form element all at once.
 
-获取单个或多个表单域的值。如果不传入任何参数，则默认获取所有表单域的值。
+```js
+// ...
+const { useFieldProps } = useForm(config);
+return <input {...useFieldProps('password')} />;
+```
 
-#### `setFeildError`
+## License
 
-类型： `(id: string, error?: string) => void`
-
-设置单个表单域的错误信息。
-
-#### `getFeildError`
-
-类型： `(id: string): string`
-
-获取单个表单域的错误信息。
-
-#### `getFeildsError`
-
-类型： `(ids?: string | string[]) => { [id: string]: { error: string } } | null`
-
-获取单个或多个表单域的错误信息。如果不传入任何参数，则默认获取所有表单域的错误信息。
-如果获取到的表单域中，都没有错误信息，则返回 `null`。
-
-#### `getFeildValidateStatus`
-
-类型： `(id: string): 'none' | 'validating' | 'success' | 'error'`
-
-获取表单域当前的校验状态。
-
-- `none` 从未进行过校验。
-- `validating` 正在校验中。可以根据该状态，显示相应的用户提示。
-- `success` 校验通过。
-- `error` 校验未通过。
-
-#### `validateFeilds`
-
-类型： `(ids?: string | string[]) => Promise<boolean>`
-
-校验单个或多个表单域。如果不传入任何参数，则默认校验所有表单域。
-如果所有指定的表单域的校验都通过了，则返回 true；否则，返回 false。
-
-#### `useFeildProps`
-
-类型： `(id: string) => { value: any; [handler: string]: Handlers }`
-
-获取一个表单域的属性。包括该表单域的值和相应的事件处理器。
-该方法主要是为了方便绑定相应的值和事件处理器。
-典型用法是使用扩展运算符将调用该方法后返回的值，全部传递给相应的表单域组件。
-
-> `useFeildProps` 是 [custom Hook](https://reactjs.org/docs/hooks-custom.html)，应遵循 Hooks 的[使用规范](https://reactjs.org/docs/hooks-rules.html)。
+MIT
