@@ -1,25 +1,25 @@
 import { SET_VALUE, SET_ERROR, SET_VALIDATE_STATUS } from './actionTypes';
 import { ValidateStatus } from './formState';
 
-export type Actions<FormFeildKey> =
-  | SetValueAction<FormFeildKey>
-  | SetErrorAction<FormFeildKey>
-  | SetValidateStatusAction<FormFeildKey>;
+export type Actions<FormFieldKey> =
+  | SetValueAction<FormFieldKey>
+  | SetErrorAction<FormFieldKey>
+  | SetValidateStatusAction<FormFieldKey>;
 
-interface SetValueAction<FormFeildKey> {
+interface SetValueAction<FormFieldKey> {
   type: typeof SET_VALUE;
-  id: FormFeildKey;
+  id: FormFieldKey;
   value: string;
 }
 
-interface SetErrorAction<FormFeildKey> {
+interface SetErrorAction<FormFieldKey> {
   type: typeof SET_ERROR;
-  id: FormFeildKey;
+  id: FormFieldKey;
   error: string;
 }
 
-interface SetValidateStatusAction<FormFeildKey> {
+interface SetValidateStatusAction<FormFieldKey> {
   type: typeof SET_VALIDATE_STATUS;
-  id: FormFeildKey;
+  id: FormFieldKey;
   validateStatus: ValidateStatus;
 }

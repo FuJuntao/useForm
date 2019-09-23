@@ -3,10 +3,10 @@ import { renderHook, act } from '@testing-library/react-hooks';
 import { useForm } from '../src/index';
 import { render, fireEvent, wait } from '@testing-library/react';
 
-describe('useFeildProps tests', () => {
+describe('useFieldProps tests', () => {
   test('should have default value when not provide any config', async () => {
     const { result } = renderHook(() =>
-      useForm({ feild: {} }).useFeildProps('feild'),
+      useForm({ field: {} }).useFieldProps('field'),
     );
 
     expect(result.current).toEqual(
@@ -17,11 +17,11 @@ describe('useFeildProps tests', () => {
   test('should return correct number of handlers when provide config', () => {
     const { result } = renderHook(() =>
       useForm({
-        feild: {
+        field: {
           validateTriggers: ['onChange', 'onBlur'],
           collectValueTrigger: 'onChange',
         },
-      }).useFeildProps('feild'),
+      }).useFieldProps('field'),
     );
 
     expect(result.current).toEqual(
@@ -35,7 +35,7 @@ describe('useFeildProps tests', () => {
 
   test("should collect value when event specified in 'collectValueTrigger' is triggered", async () => {
     const { result, waitForNextUpdate } = renderHook<{}, any>(() =>
-      useForm({ feild: { getValueFromEvent: e => e } }).useFeildProps('feild'),
+      useForm({ field: { getValueFromEvent: e => e } }).useFieldProps('field'),
     );
     const value = 'hello world';
     act(() => {
@@ -51,7 +51,7 @@ describe('useFeildProps tests', () => {
     const errorMessage = 'please enter something';
     const { result: useFormResult, waitForNextUpdate } = renderHook(() =>
       useForm({
-        feild: {
+        field: {
           initialValue: 'abc',
           getValueFromEvent: e => e,
           validator: (value: string) =>
@@ -59,22 +59,22 @@ describe('useFeildProps tests', () => {
         },
       }),
     );
-    const { result: useFeildPropsResult } = renderHook<unknown, any>(() =>
-      useFormResult.current.useFeildProps('feild'),
+    const { result: useFieldPropsResult } = renderHook<unknown, any>(() =>
+      useFormResult.current.useFieldProps('field'),
     );
 
     act(() => {
-      useFeildPropsResult.current.onChange('');
+      useFieldPropsResult.current.onChange('');
     });
     await waitForNextUpdate();
 
-    expect(useFormResult.current.getFeildError('feild')).toBe(errorMessage);
-    expect(useFormResult.current.getFeildValidateStatus('feild')).toBe('error');
+    expect(useFormResult.current.getFieldError('field')).toBe(errorMessage);
+    expect(useFormResult.current.getFieldValidateStatus('field')).toBe('error');
   });
 
   function Input() {
-    const { useFeildProps, getFeildError } = useForm({
-      feild: {
+    const { useFieldProps, getFieldError } = useForm({
+      field: {
         validator: (value: string) => {
           return new Promise(resolve => {
             setTimeout(
@@ -92,8 +92,8 @@ describe('useFeildProps tests', () => {
 
     return (
       <div>
-        <input {...useFeildProps('feild')} data-testid="input" />
-        <p data-testid="error">{getFeildError('feild')}</p>
+        <input {...useFieldProps('field')} data-testid="input" />
+        <p data-testid="error">{getFieldError('field')}</p>
       </div>
     );
   }
