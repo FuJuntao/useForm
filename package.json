@@ -1,6 +1,6 @@
 {
   "name": "@fujuntao/use-form",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "",
   "keywords": [],
   "author": "FuJuntao",
@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "tsc --build tsconfig.json"
+    "build": "rm -rf lib/ && tsc --build tsconfig.json",
+    "prepublishOnly": "yarn build"
   },
   "husky": {
     "hooks": {
