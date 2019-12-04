@@ -1,31 +1,7 @@
-import { BasicFieldValues, FieldNames } from './types';
 import { Reducer } from 'react';
-
-const SET_VALUE = 'SET_VALUE';
-
-const REGISTER_FIELD = 'REGISTER_FIELD';
-
-type SetValueAction<
-  FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
-> = {
-  type: typeof SET_VALUE;
-  name: FieldName;
-  value: FieldValues[FieldName];
-};
-
-type RegisterFieldAction<
-  FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
-> = {
-  type: typeof REGISTER_FIELD;
-  name: FieldName;
-  value?: FieldValues[FieldName];
-};
-
-type Actions<FieldValues extends BasicFieldValues> =
-  | SetValueAction<FieldValues, FieldNames<FieldValues>>
-  | RegisterFieldAction<FieldValues, FieldNames<FieldValues>>;
+import { BasicFieldValues, FieldNames } from '../types';
+import { Actions } from './actions';
+import { REGISTER_FIELD, SET_VALUE } from './actionTypes';
 
 interface FieldState<
   FieldValues extends BasicFieldValues,

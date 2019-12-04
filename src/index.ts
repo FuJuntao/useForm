@@ -3,9 +3,9 @@ import { FormReducer, reducer } from './reducer';
 import {
   BasicFieldValues,
   FieldNames,
-  RegisterOptions,
-  Register,
   FormOptions,
+  Register,
+  RegisterOptions,
 } from './types';
 
 function useForm<FieldValues extends BasicFieldValues>(
