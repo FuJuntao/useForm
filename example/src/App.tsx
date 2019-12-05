@@ -8,7 +8,7 @@ interface Fields {
 }
 
 const App: React.FC = () => {
-  const { register } = useForm<Fields>({
+  const { register, state } = useForm<Fields>({
     getValueFromEvent: (e: any) => {
       return e.target.value;
     },

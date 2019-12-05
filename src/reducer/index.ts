@@ -1,1 +1,2 @@
-export { FormReducer, reducer } from './reducer';
+export { Actions } from './actions';
+export { reducer, State } from './reducer';

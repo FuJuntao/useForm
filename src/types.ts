@@ -2,7 +2,7 @@ export type BasicFieldValues = Record<string, any>;
 
 export type FieldNames<FieldValues> = Extract<keyof FieldValues, string>;
 
-type GetValueFromEvent<
+export type GetValueFromEvent<
   FieldValues extends BasicFieldValues,
   FieldName extends FieldNames<FieldValues>
 > = (e: any) => FieldValues[FieldName];
