@@ -9,6 +9,7 @@ export type GetValueFromEvent<
 
 export type FormOptions<FieldValues extends BasicFieldValues> = {
   getValueFromEvent?: GetValueFromEvent<FieldValues, any>;
+  collectValueTrigger?: string;
 };
 
 // TODO:
@@ -38,7 +39,8 @@ export interface RegisterOptions<
   name: FieldName;
   defaultValue?: FieldValues[FieldName];
   getValueFromEvent?: GetValueFromEvent<FieldValues, FieldName>;
-  validators?: Validators<FieldValues, FieldName>;
+  collectValueTrigger?: string;
+  // validators?: Validators<FieldValues, FieldName>;
 }
 
 export interface Register<FieldValues extends BasicFieldValues> {

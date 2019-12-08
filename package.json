@@ -1,56 +1,38 @@
 {
-  "name": "@fujuntao/use-form",
-  "version": "0.2.2",
-  "description": "",
-  "keywords": [],
-  "author": "FuJuntao",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/FuJuntao/useForm.git"
-  },
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
-  "files": [
-    "lib/**/*"
-  ],
-  "scripts": {
-    "test": "jest",
-    "build": "rm -rf lib/ && tsc --build tsconfig.json",
-    "prepublishOnly": "yarn build"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
+  "name": "form-hook",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "tslib": "^1.10.0"
-  },
-  "devDependencies": {
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/react-hooks": "^3.2.1",
-    "@types/jest": "^24.0.23",
-    "@types/react": "^16.9.15",
-    "@types/react-dom": "^16.9.4",
-    "@typescript-eslint/eslint-plugin": "^2.10.0",
-    "@typescript-eslint/parser": "^2.10.0",
-    "eslint": "^6.7.2",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "eslint-plugin-react": "^7.17.0",
-    "husky": "^3.1.0",
-    "jest": "^24.9.0",
-    "lint-staged": ">=9.5.0",
-    "prettier": "^1.19.1",
+    "@material-ui/core": "^4.7.2",
+    "@types/jest": "24.0.23",
+    "@types/node": "12.12.14",
+    "@types/react": "16.9.15",
+    "@types/react-dom": "16.9.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-test-renderer": "^16.12.0",
-    "ts-jest": "^24.2.0",
-    "typescript": "^3.7.3"
+    "react-hook-form": "^3.28.14",
+    "react-scripts": "3.3.0",
+    "typescript": "3.7.3"
   },
-  "peerDependencies": {
-    "react": ">= 16.8.0",
-    "react-dom": ">= 16.8.0"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

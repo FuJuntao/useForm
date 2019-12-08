@@ -20,8 +20,11 @@ export function reducer<FieldValues extends BasicFieldValues>(
 ) {
   switch (action.type) {
     case REGISTER_FIELD: {
-      const { name, value, getValueFromEvent } = action;
-      return { ...state, [name]: { value, getValueFromEvent } };
+      const { name, value, getValueFromEvent, collectValueTrigger } = action;
+      return {
+        ...state,
+        [name]: { value, getValueFromEvent, collectValueTrigger },
+      };
     }
     default: {
       return state;

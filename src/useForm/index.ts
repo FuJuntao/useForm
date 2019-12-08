@@ -21,21 +21,21 @@ function useForm<FieldValues extends BasicFieldValues>(
     (...registers: RegisterOptions<FieldValues, FieldNames<FieldValues>>[]) => {
       registers.forEach(register => {
         const { name, defaultValue } = register;
-        let getValueFromEvent;
         if (typeof name !== 'string') {
           return;
-        }
-        if (typeof options?.getValueFromEvent === 'function') {
-          getValueFromEvent = options.getValueFromEvent;
-        }
-        if (typeof register.getValueFromEvent === 'function') {
-          getValueFromEvent = register.getValueFromEvent;
         }
         dispatch({
           type: 'REGISTER_FIELD',
           name,
           value: defaultValue,
-          getValueFromEvent: getValueFromEvent ?? defaultGetValueFromEvent,
+          getValueFromEvent:
+            register.getValueFromEvent ??
+            options?.getValueFromEvent ??
+            defaultGetValueFromEvent,
+          collectValueTrigger:
+            register.collectValueTrigger ??
+            options?.collectValueTrigger ??
+            'onChange',
         });
       });
     },

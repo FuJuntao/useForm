@@ -1,5 +1,5 @@
 import React, { useEffect, ChangeEvent } from 'react';
-import useForm from '../../src/index';
+import useForm from './useForm';
 
 interface Fields {
   phone: string;
@@ -19,7 +19,7 @@ const App: React.FC = () => {
       {
         name: 'phone',
         defaultValue: '12312',
-        validators: { validate: e => {} },
+        // validators: { validate: e => {} },
         getValueFromEvent: (e: ChangeEvent<HTMLInputElement>) => {
           return e.target.value;
         },
@@ -27,7 +27,7 @@ const App: React.FC = () => {
       {
         name: 'password',
         defaultValue: 123123,
-        validators: { validate: async e => {} },
+        // validators: { validate: async e => {} },
         getValueFromEvent: (e: ChangeEvent<HTMLInputElement>) => {
           return +e.target.value;
         },
@@ -35,10 +35,12 @@ const App: React.FC = () => {
       {
         name: 'date',
         defaultValue: '1995-11-01',
-        validators: { validate: e => {} },
+        // validators: { validate: e => {} },
       },
     );
   }, [register]);
+
+  console.log('TCL: App:React.FC -> state', state);
 
   return (
     <div>
