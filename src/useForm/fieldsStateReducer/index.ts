@@ -1,11 +1,11 @@
 import { BasicFieldValues } from '../types';
 
-export type Actions<
+export type FieldsStateActions<
   FieldValues extends BasicFieldValues
 > = import('./actions').Actions<FieldValues>;
 
-export type State<
+export type FieldsState<
   FieldValues extends BasicFieldValues
 > = import('./reducer').State<FieldValues>;
 
-export { reducer } from './reducer';
+export { reducer as fieldsStateReducer } from './reducer';

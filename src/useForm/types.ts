@@ -7,9 +7,12 @@ export type GetValueFromEvent<
   FieldName extends FieldNames<FieldValues>
 > = (e: any) => FieldValues[FieldName];
 
+type ValidationMode = 'onSubmit' | 'onChange';
+
 export type FormOptions<FieldValues extends BasicFieldValues> = {
   getValueFromEvent?: GetValueFromEvent<FieldValues, any>;
   collectValueTrigger?: string;
+  validationMode?: ValidationMode;
 };
 
 // TODO:
@@ -40,6 +43,7 @@ export interface RegisterOptions<
   defaultValue?: FieldValues[FieldName];
   getValueFromEvent?: GetValueFromEvent<FieldValues, FieldName>;
   collectValueTrigger?: string;
+  validationTriggers?: string[];
   // validators?: Validators<FieldValues, FieldName>;
 }
 

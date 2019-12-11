@@ -8,10 +8,9 @@ interface Fields {
 }
 
 const App: React.FC = () => {
-  const { register, state } = useForm<Fields>({
-    getValueFromEvent: (e: any) => {
-      return e.target.value;
-    },
+  const { register, fromState, fieldsState } = useForm<Fields>({
+    getValueFromEvent: (value: any) => value,
+    collectValueTrigger: 'onBlur',
   });
 
   useEffect(() => {
@@ -40,7 +39,8 @@ const App: React.FC = () => {
     );
   }, [register]);
 
-  console.log('TCL: App:React.FC -> state', state);
+  console.log('TCL: App:React.FC -> fromState', fromState);
+  console.log('TCL: App:React.FC -> state', fieldsState);
 
   return (
     <div>

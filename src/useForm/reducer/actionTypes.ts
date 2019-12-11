@@ -1,1 +1,0 @@
-export const REGISTER_FIELD = 'REGISTER_FIELD';

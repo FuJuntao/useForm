@@ -10,6 +10,7 @@ type RegisterFieldAction<
   value?: FieldValues[FieldName];
   getValueFromEvent: GetValueFromEvent<FieldValues, FieldName>;
   collectValueTrigger: string;
+  validationTriggers: string[];
 };
 
 export type Actions<FieldValues extends BasicFieldValues> = RegisterFieldAction<
