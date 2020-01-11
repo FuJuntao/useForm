@@ -1,0 +1,30 @@
+{
+  "name": "@fujuntao/use-form",
+  "version": "0.2.2",
+  "description": "",
+  "keywords": [],
+  "author": "FuJuntao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FuJuntao/useForm.git"
+  },
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "test": "jest",
+    "build": "rm -rf lib/ && tsc --build tsconfig.json",
+    "prepublishOnly": "yarn build"
+  },
+  "dependencies": {
+    "tslib": "^1.10.0"
+  },
+  "peerDependencies": {
+    "react": ">= 16.8.0",
+    "react-dom": ">= 16.8.0",
+    "yup": ">=0.28.0"
+  }
+}

@@ -1,38 +1,45 @@
 {
-  "name": "form-hook",
-  "version": "0.1.0",
+  "name": "root",
   "private": true,
-  "dependencies": {
-    "@material-ui/core": "^4.7.2",
-    "@types/jest": "24.0.23",
-    "@types/node": "12.12.14",
-    "@types/react": "16.9.15",
-    "@types/react-dom": "16.9.4",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-hook-form": "^3.28.14",
-    "react-scripts": "3.3.0",
-    "typescript": "3.7.3"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "yarn workspace @fujuntao/use-form-website start"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "devDependencies": {
+    "@testing-library/react": "^9.1.4",
+    "@testing-library/react-hooks": "^3.2.1",
+    "@types/jest": "^24.0.18",
+    "@types/react": "^16.9.2",
+    "@types/react-dom": "^16.9.0",
+    "@types/yup": "^0.26.27",
+    "@typescript-eslint/eslint-plugin": "2.15.0",
+    "@typescript-eslint/parser": "2.15.0",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.3.0",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-config-react-app": "^5.1.0",
+    "eslint-plugin-flowtype": "4.5.3",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-react": "7.17.0",
+    "eslint-plugin-react-hooks": "2.3.0",
+    "husky": "^4.0.6",
+    "jest": "^24.9.0",
+    "lerna": "^3.20.2",
+    "lint-staged": ">=8",
+    "prettier": "^1.19.1",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "react-test-renderer": "^16.9.0",
+    "ts-jest": "^24.3.0",
+    "yup": "^0.28.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
