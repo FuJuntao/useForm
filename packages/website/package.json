@@ -1,6 +1,6 @@
 {
   "name": "@fujuntao/use-form-website",
-  "version": "0.1.1-alpha.0",
+  "version": "0.1.2-alpha.0",
   "description": "",
   "keywords": [],
   "author": "Juntao Fu <fu.juntao358@gmail.com>",
@@ -18,7 +18,7 @@
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
   "dependencies": {
-    "@fujuntao/use-form": "^0.2.3-alpha.0",
+    "@fujuntao/use-form": "^0.2.4-alpha.0",
     "gatsby": "^2.18.12",
     "gatsby-image": "^2.2.34",
     "gatsby-plugin-manifest": "^2.2.31",
