@@ -1,13 +1,8 @@
 {
   "name": "@fujuntao/use-form-website",
   "version": "0.1.2-alpha.0",
-  "description": "",
-  "keywords": [],
+  "private": true,
   "author": "Juntao Fu <fu.juntao358@gmail.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "gatsby build",
     "develop": "gatsby develop",
