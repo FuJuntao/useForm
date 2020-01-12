@@ -1,39 +1,41 @@
 {
   "name": "@fujuntao/use-form-website",
   "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@fujuntao/use-form": "^0.2.2",
-    "@material-ui/core": "^4.7.2",
-    "@types/node": "12.12.14",
-    "@types/react": "16.9.15",
-    "@types/react-dom": "16.9.4",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-hook-form": "^3.28.14",
-    "react-scripts": "3.3.0",
-    "typescript": "^3.7.4",
-    "yup": "^0.28.0"
+  "description": "",
+  "keywords": [],
+  "author": "Juntao Fu <fu.juntao358@gmail.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "build": "gatsby build",
+    "develop": "gatsby develop",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "start": "npm run develop",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean",
+    "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "dependencies": {
+    "@fujuntao/use-form": "^0.2.2",
+    "gatsby": "^2.18.12",
+    "gatsby-image": "^2.2.34",
+    "gatsby-plugin-manifest": "^2.2.31",
+    "gatsby-plugin-offline": "^3.0.27",
+    "gatsby-plugin-react-helmet": "^3.1.16",
+    "gatsby-plugin-sharp": "^2.3.5",
+    "gatsby-plugin-typescript": "^2.1.26",
+    "gatsby-source-filesystem": "^2.1.40",
+    "gatsby-transformer-sharp": "^2.3.7",
+    "prop-types": "^15.7.2",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-helmet": "^5.2.1"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "@types/react-helmet": "^5.0.15",
+    "eslint-loader": "^3.0.3",
+    "gatsby-plugin-eslint": "^2.0.8"
   }
 }

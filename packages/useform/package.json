@@ -3,8 +3,11 @@
   "version": "0.2.2",
   "description": "",
   "keywords": [],
-  "author": "FuJuntao",
+  "author": "Juntao Fu <fu.juntao358@gmail.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FuJuntao/useForm.git"

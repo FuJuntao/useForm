@@ -20,7 +20,7 @@ const validationSchema = yup.object().shape({
   date: yup.date().required(),
 });
 
-const App: React.FC = () => {
+const IndexPage: React.FC = () => {
   const { getValues, formState, bind } = useForm<Fields>({
     getValueFromEvent: (value: any) => value,
     register: {
@@ -54,4 +54,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default IndexPage;
