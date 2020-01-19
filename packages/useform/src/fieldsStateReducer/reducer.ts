@@ -6,7 +6,7 @@ interface FieldState<
   FieldValues extends BasicFieldValues,
   FieldName extends FieldNames<FieldValues>
 > {
-  value?: FieldValues[FieldName];
+  value: FieldValues[FieldName];
   getValueFromEvent: GetValueFromEvent<FieldValues, FieldName>;
   collectValueTrigger: string;
   validationTriggers: string[];

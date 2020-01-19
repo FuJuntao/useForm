@@ -45,10 +45,10 @@ function useForm<FieldValues extends BasicFieldValues>(
   >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
 
   const getValues = () => {
-    const values: Partial<FieldValues> = {};
+    const values = {} as FieldValues;
     Object.keys(fieldsState).forEach(key => {
       const typedKey = key as FieldNames<FieldValues>;
-      values[typedKey] = fieldsState[typedKey]?.value;
+      values[typedKey] = fieldsState[typedKey].value;
     });
     return values;
   };

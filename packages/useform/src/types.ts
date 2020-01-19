@@ -15,7 +15,7 @@ interface RegisterOptions<
   FieldValues extends BasicFieldValues,
   FieldName extends FieldNames<FieldValues>
 > {
-  defaultValue?: FieldValues[FieldName];
+  defaultValue: FieldValues[FieldName];
   getValueFromEvent?: GetValueFromEvent<FieldValues, FieldName>;
   collectValueTrigger?: string;
   validationTriggers?: string | string[];
