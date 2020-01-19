@@ -19,7 +19,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "rm -rf lib/ && tsc --build tsconfig.json",
+    "prebuild": "rimraf lib",
+    "build": "tsc -b tsconfig.json",
+    "watch":"tsc -b -w tsconfig.json",
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
@@ -28,6 +30,9 @@
   "peerDependencies": {
     "react": ">= 16.8.0",
     "react-dom": ">= 16.8.0",
-    "yup": ">=0.28.0"
+    "yup": ">= 0.28.0"
+  },
+  "devDependencies": {
+    "@types/yup": "^0.26.27"
   }
 }

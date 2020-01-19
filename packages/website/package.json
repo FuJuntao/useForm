@@ -6,7 +6,6 @@
   "scripts": {
     "build": "gatsby build",
     "develop": "gatsby develop",
-    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
     "start": "npm run develop",
     "serve": "gatsby serve",
     "clean": "gatsby clean",
@@ -30,6 +29,7 @@
   },
   "devDependencies": {
     "@types/react-helmet": "^5.0.15",
+    "@types/yup": "^0.26.27",
     "eslint-loader": "^3.0.3",
     "gatsby-plugin-eslint": "^2.0.8"
   }
