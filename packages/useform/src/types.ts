@@ -33,6 +33,6 @@ export type FormOptions<FieldValues extends BasicFieldValues> = {
   validationSchema?: Schema<FieldValues>;
 };
 
-export type Handlers = {
-  [Key in string]: (e: any) => void;
+export type Handlers<Keys = string> = {
+  [Key in Extract<Keys, string>]: (e: any) => void;
 };

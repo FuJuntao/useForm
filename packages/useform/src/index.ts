@@ -53,56 +53,67 @@ function useForm<FieldValues extends BasicFieldValues>(
     return values;
   };
 
-  const bind = <FieldName extends FieldNames<FieldValues>>(
+  const dispatchSetValue = <FieldName extends FieldNames<FieldValues>>(
+    value: FieldValues[FieldName],
     fieldName: FieldName,
   ) => {
-    const {
+    fieldsStateDispatch({
+      type: fieldsStateActionTypes.SET_VALUE,
+      key: fieldName,
       value,
+    });
+  };
+
+  const getCollectValueEventHandler = <
+    FieldName extends FieldNames<FieldValues>
+  >(
+    fieldName: FieldName,
+  ) => {
+    const { getValueFromEvent } = fieldsState[fieldName];
+    return async (e: any) => {
+      const value = getValueFromEvent(e);
+      dispatchSetValue(value, fieldName);
+    };
+  };
+
+  const getValidationEventHandlers = <
+    FieldName extends FieldNames<FieldValues>
+  >(
+    fieldName: FieldName,
+  ) => {
+    const { validationSchema } = optionsRef.current;
+    const {
       collectValueTrigger,
       validationTriggers,
       getValueFromEvent,
     } = fieldsState[fieldName];
-    const { validationSchema } = optionsRef.current;
-
-    const dispatchSetValue = (value: FieldValues[FieldName]) => {
-      fieldsStateDispatch({
-        type: fieldsStateActionTypes.SET_VALUE,
-        key: fieldName,
-        value,
-      });
-    };
-
-    const getValidationEventHandlers = () => {
-      const handlers: Handlers = {};
-      validationTriggers.forEach(item => {
+    const handlers: Handlers = {};
+    validationTriggers.forEach(item => {
+      handlers[item] = async (e: any) => {
+        const value = getValueFromEvent(e);
+        // If validationTriggers includes collectValueTrigger,
+        // dispatch the value to update fieldsState
         if (item === collectValueTrigger) {
-          handlers[item] = async (e: any) => {
-            const value = getValueFromEvent(e);
-            dispatchSetValue(value);
-            if (validationSchema) {
-              const values = getValues();
-              values[fieldName] = value;
-              await validateValue(validationSchema, values);
-            }
-          };
-        } else {
-          handlers[item] = async (e: any) => {
-            const value = getValueFromEvent(e);
-            if (validationSchema) {
-              const values = getValues();
-              values[fieldName] = value;
-              await validateValue(validationSchema, values);
-            }
-          };
+          dispatchSetValue(value, fieldName);
         }
-      });
-      return handlers;
-    };
+        if (validationSchema) {
+          const values = getValues();
+          values[fieldName] = value;
+          await validateValue(validationSchema, values);
+        }
+      };
+    });
+    return handlers;
+  };
 
+  const bind = <FieldName extends FieldNames<FieldValues>>(
+    fieldName: FieldName,
+  ) => {
+    const { value, collectValueTrigger } = fieldsState[fieldName];
     return {
       value,
-      [collectValueTrigger]: dispatchSetValue,
-      ...getValidationEventHandlers(),
+      [collectValueTrigger]: getCollectValueEventHandler(fieldName),
+      ...getValidationEventHandlers(fieldName),
     };
   };
 

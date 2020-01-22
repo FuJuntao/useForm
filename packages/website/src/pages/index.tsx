@@ -1,5 +1,5 @@
-import React, { ChangeEvent } from 'react';
 import useForm from '@fujuntao/use-form';
+import React, { ChangeEvent } from 'react';
 import * as yup from 'yup';
 
 interface Fields {
