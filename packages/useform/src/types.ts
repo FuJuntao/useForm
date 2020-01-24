@@ -25,6 +25,20 @@ export type Register<FieldValues extends BasicFieldValues> = {
   [Key in FieldNames<FieldValues>]: RegisterOptions<FieldValues, Key>;
 };
 
+interface FieldOptions<
+  FieldValues extends BasicFieldValues,
+  FieldName extends FieldNames<FieldValues>
+> {
+  defaultValue: FieldValues[FieldName];
+  getValueFromEvent: GetValueFromEvent<FieldValues, FieldName>;
+  collectValueTrigger: string;
+  validationTriggers: string[];
+}
+
+export type FieldsOptions<FieldValues extends BasicFieldValues> = {
+  [Key in FieldNames<FieldValues>]: FieldOptions<FieldValues, Key>;
+};
+
 export type FormOptions<FieldValues extends BasicFieldValues> = {
   register: Register<FieldValues>;
   getValueFromEvent?: GetValueFromEvent<FieldValues, any>;

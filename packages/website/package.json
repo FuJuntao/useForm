@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fujuntao/use-form": "^0.2.4-alpha.0",
+    "@material-ui/core": "^4.9.0",
     "gatsby": "^2.18.12",
     "gatsby-image": "^2.2.34",
     "gatsby-plugin-manifest": "^2.2.31",
@@ -26,11 +27,14 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-helmet": "^5.2.1",
+    "styled-components": "^5.0.0",
     "yup": "^0.28.0"
   },
   "devDependencies": {
     "@types/react-helmet": "^5.0.15",
     "@types/yup": "^0.26.27",
+    "babel-plugin-styled-components": "^1.10.6",
+    "babel-preset-gatsby": "^0.2.27",
     "eslint-loader": "^3.0.3",
     "gatsby-plugin-eslint": "^2.0.8"
   }

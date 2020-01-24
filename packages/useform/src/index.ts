@@ -1,4 +1,4 @@
-import { Reducer, useReducer, useRef } from 'react';
+import { Reducer, useCallback, useMemo, useReducer, useRef } from 'react';
 import {
   Actions as FieldsStateActions,
   actionTypes as fieldsStateActionTypes,
@@ -11,8 +11,9 @@ import {
   State as FormState,
 } from './formStateReducer';
 import getDefaultFieldsState from './getDefaultFieldsState';
+import getFieldsOptions from './getFieldsOptions';
 import { BasicFieldValues, FieldNames, FormOptions, Handlers } from './types';
-import { Schema } from 'yup';
+import validateFieldValue from './validateFieldValue';
 
 const defaultFormState = {
   dirty: false,
@@ -22,21 +23,11 @@ const defaultFormState = {
   isValid: true,
 };
 
-async function validateValue<T>(validationSchema: Schema<T>, values: T) {
-  try {
-    const result = await validationSchema.validate(values, {
-      abortEarly: false,
-    });
-    console.log('TCL: getValidationEventHandlers -> result', result);
-  } catch (error) {
-    console.log('TCL: error', error);
-  }
-}
-
 function useForm<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
 ) {
   const optionsRef = useRef(options);
+  const fieldsOptions = useMemo(() => getFieldsOptions(optionsRef.current), []);
   const [formState, formStateDispatch] = useReducer<
     Reducer<FormState<FieldValues>, FormStateActions>
   >(formStateReducer, defaultFormState);
@@ -44,18 +35,18 @@ function useForm<FieldValues extends BasicFieldValues>(
     Reducer<FieldsState<FieldValues>, FieldsStateActions<FieldValues>>
   >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
 
-  const getValues = () => {
+  const getValues = useCallback(() => {
     const values = {} as FieldValues;
     Object.keys(fieldsState).forEach(key => {
       const typedKey = key as FieldNames<FieldValues>;
       values[typedKey] = fieldsState[typedKey].value;
     });
     return values;
-  };
+  }, [fieldsState]);
 
   const dispatchSetValue = <FieldName extends FieldNames<FieldValues>>(
-    value: FieldValues[FieldName],
     fieldName: FieldName,
+    value: FieldValues[FieldName],
   ) => {
     fieldsStateDispatch({
       type: fieldsStateActionTypes.SET_VALUE,
@@ -64,58 +55,70 @@ function useForm<FieldValues extends BasicFieldValues>(
     });
   };
 
-  const getCollectValueEventHandler = <
-    FieldName extends FieldNames<FieldValues>
-  >(
-    fieldName: FieldName,
-  ) => {
-    const { getValueFromEvent } = fieldsState[fieldName];
-    return async (e: any) => {
-      const value = getValueFromEvent(e);
-      dispatchSetValue(value, fieldName);
-    };
-  };
-
-  const getValidationEventHandlers = <
-    FieldName extends FieldNames<FieldValues>
-  >(
-    fieldName: FieldName,
-  ) => {
-    const { validationSchema } = optionsRef.current;
-    const {
-      collectValueTrigger,
-      validationTriggers,
-      getValueFromEvent,
-    } = fieldsState[fieldName];
-    const handlers: Handlers = {};
-    validationTriggers.forEach(item => {
-      handlers[item] = async (e: any) => {
+  const getCollectValueEventHandler = useCallback(
+    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+      const { getValueFromEvent } = fieldsOptions[fieldName];
+      return async (e: any) => {
         const value = getValueFromEvent(e);
-        // If validationTriggers includes collectValueTrigger,
-        // dispatch the value to update fieldsState
-        if (item === collectValueTrigger) {
-          dispatchSetValue(value, fieldName);
-        }
-        if (validationSchema) {
-          const values = getValues();
-          values[fieldName] = value;
-          await validateValue(validationSchema, values);
-        }
+        dispatchSetValue(fieldName, value);
       };
-    });
-    return handlers;
-  };
+    },
+    [fieldsOptions],
+  );
 
-  const bind = <FieldName extends FieldNames<FieldValues>>(
-    fieldName: FieldName,
-  ) => {
-    const { value, collectValueTrigger } = fieldsState[fieldName];
-    return {
-      value,
-      [collectValueTrigger]: getCollectValueEventHandler(fieldName),
-      ...getValidationEventHandlers(fieldName),
-    };
-  };
+  const getValidationEventHandlers = useCallback(
+    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+      const { validationSchema } = optionsRef.current;
+      const { validationTriggers, getValueFromEvent } = fieldsOptions[
+        fieldName
+      ];
+      const handlers: Handlers = {};
+      validationTriggers.forEach(item => {
+        handlers[item] = async (e: any) => {
+          const value = getValueFromEvent(e);
+          if (validationSchema) {
+            const values = getValues();
+            values[fieldName] = value;
+            await validateFieldValue(validationSchema, values, fieldName);
+          }
+        };
+      });
+      return handlers;
+    },
+    [fieldsOptions, getValues],
+  );
+
+  const getEventHandlers = useCallback(
+    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+      const { collectValueTrigger, validationTriggers } = fieldsOptions[
+        fieldName
+      ];
+      const collectValueEventHandler = getCollectValueEventHandler(fieldName);
+      const validationEventHandlers = getValidationEventHandlers(fieldName);
+      if (validationTriggers.includes(collectValueTrigger)) {
+        return {
+          ...validationEventHandlers,
+          [collectValueTrigger]: (e: any) => {
+            collectValueEventHandler(e);
+            validationEventHandlers[collectValueTrigger](e);
+          },
+        };
+      }
+      return {
+        collectValueTrigger: collectValueEventHandler,
+        ...validationEventHandlers,
+      };
+    },
+    [fieldsOptions, getCollectValueEventHandler, getValidationEventHandlers],
+  );
+
+  const bind = useCallback(
+    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+      const { value } = fieldsState[fieldName];
+      return { value, ...getEventHandlers(fieldName) };
+    },
+    [fieldsState, getEventHandlers],
+  );
 
   return { formState, getValues, bind };
 }

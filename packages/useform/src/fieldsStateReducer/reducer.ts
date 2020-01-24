@@ -1,4 +1,4 @@
-import { BasicFieldValues, FieldNames, GetValueFromEvent } from '../types';
+import { BasicFieldValues, FieldNames } from '../types';
 import { Actions } from './actions';
 import { SET_VALUE } from './actionTypes';
 
@@ -7,9 +7,6 @@ interface FieldState<
   FieldName extends FieldNames<FieldValues>
 > {
   value: FieldValues[FieldName];
-  getValueFromEvent: GetValueFromEvent<FieldValues, FieldName>;
-  collectValueTrigger: string;
-  validationTriggers: string[];
 }
 
 export type State<FieldValues extends BasicFieldValues> = {

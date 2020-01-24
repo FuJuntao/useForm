@@ -1,55 +1,50 @@
 import useForm from '@fujuntao/use-form';
+import { TextField } from '@material-ui/core';
 import React, { ChangeEvent } from 'react';
 import * as yup from 'yup';
 
 interface Fields {
-  phone: string;
-  password: number;
+  email: string;
+  password: string;
   date: Date;
 }
 
 const validationSchema = yup.object().shape({
-  phone: yup
+  email: yup
     .string()
     .required()
-    .max(10),
+    .email(),
   password: yup
-    .number()
+    .string()
     .required()
-    .lessThan(2019),
+    .min(6)
+    .max(10),
   date: yup.date().required(),
 });
 
 const IndexPage: React.FC = () => {
   const { getValues, formState, bind } = useForm<Fields>({
-    getValueFromEvent: (value: any) => value,
     register: {
-      phone: {
+      email: {
         defaultValue: '12312',
+      },
+      password: {
+        defaultValue: 'password',
         getValueFromEvent: (e: ChangeEvent<HTMLInputElement>) => {
           return e.target.value;
         },
       },
-      password: {
-        defaultValue: 123123123123,
-        getValueFromEvent: (e: ChangeEvent<HTMLInputElement>) => {
-          return +e.target.value;
-        },
+      date: {
+        defaultValue: new Date(),
       },
-      date: { defaultValue: new Date() },
     },
     validationSchema,
   });
 
-  // console.log('TCL: App:React.FC -> fromState', formState);
-  // console.log(getValues());
-  console.log(bind('date'));
-
   return (
     <div>
-      <p>asdf</p>
-      <input {...bind('phone')} />
-      <input {...bind('password')} />
+      <TextField {...bind('email')} />
+      <TextField {...bind('password')} />
     </div>
   );
 };
