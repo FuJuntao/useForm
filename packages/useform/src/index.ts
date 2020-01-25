@@ -12,7 +12,13 @@ import {
 } from './formStateReducer';
 import getDefaultFieldsState from './getDefaultFieldsState';
 import getFieldsOptions from './getFieldsOptions';
-import { BasicFieldValues, FieldNames, FormOptions, Handlers } from './types';
+import {
+  BasicFieldValues,
+  FieldNames,
+  FieldsErrors,
+  FormOptions,
+  Handlers,
+} from './types';
 import validateFieldValue from './validateFieldValue';
 
 const defaultFormState = {
@@ -35,25 +41,41 @@ function useForm<FieldValues extends BasicFieldValues>(
     Reducer<FieldsState<FieldValues>, FieldsStateActions<FieldValues>>
   >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
 
-  const getValues = useCallback(() => {
+  const getSpecificFieldsState = useCallback(() => {
     const values = {} as FieldValues;
+    const errors = {} as FieldsErrors<FieldValues>;
     Object.keys(fieldsState).forEach(key => {
       const typedKey = key as FieldNames<FieldValues>;
-      values[typedKey] = fieldsState[typedKey].value;
+      const { value, error } = fieldsState[typedKey];
+      values[typedKey] = value;
+      errors[typedKey] = error;
     });
-    return values;
+    return { values, errors };
   }, [fieldsState]);
 
-  const dispatchSetValue = <FieldName extends FieldNames<FieldValues>>(
-    fieldName: FieldName,
-    value: FieldValues[FieldName],
-  ) => {
-    fieldsStateDispatch({
-      type: fieldsStateActionTypes.SET_VALUE,
-      key: fieldName,
-      value,
-    });
-  };
+  const dispatchSetValue = useCallback(
+    <FieldName extends FieldNames<FieldValues>>(
+      fieldName: FieldName,
+      value: FieldValues[FieldName],
+    ) => {
+      fieldsStateDispatch({
+        type: fieldsStateActionTypes.SET_VALUE,
+        key: fieldName,
+        value,
+      });
+    },
+    [],
+  );
+
+  const dispatchUpdateErrors = useCallback(
+    (errors: FieldsErrors<FieldValues>) => {
+      fieldsStateDispatch({
+        type: fieldsStateActionTypes.UPDATE_ERRORS,
+        errors,
+      });
+    },
+    [],
+  );
 
   const getCollectValueEventHandler = useCallback(
     <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
@@ -63,7 +85,7 @@ function useForm<FieldValues extends BasicFieldValues>(
         dispatchSetValue(fieldName, value);
       };
     },
-    [fieldsOptions],
+    [dispatchSetValue, fieldsOptions],
   );
 
   const getValidationEventHandlers = useCallback(
@@ -77,15 +99,19 @@ function useForm<FieldValues extends BasicFieldValues>(
         handlers[item] = async (e: any) => {
           const value = getValueFromEvent(e);
           if (validationSchema) {
-            const values = getValues();
+            const { values } = getSpecificFieldsState();
             values[fieldName] = value;
-            await validateFieldValue(validationSchema, values, fieldName);
+            const validationResult = await validateFieldValue<
+              FieldValues,
+              FieldName
+            >(validationSchema, values, fieldName);
+            dispatchUpdateErrors(validationResult);
           }
         };
       });
       return handlers;
     },
-    [fieldsOptions, getValues],
+    [dispatchUpdateErrors, fieldsOptions, getSpecificFieldsState],
   );
 
   const getEventHandlers = useCallback(
@@ -120,7 +146,11 @@ function useForm<FieldValues extends BasicFieldValues>(
     [fieldsState, getEventHandlers],
   );
 
-  return { formState, getValues, bind };
+  return {
+    formState,
+    bind,
+    ...getSpecificFieldsState(),
+  };
 }
 
 export default useForm;

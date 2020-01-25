@@ -1,7 +1,12 @@
 import useForm from '@fujuntao/use-form';
-import { TextField } from '@material-ui/core';
+import { Box, TextField } from '@material-ui/core';
 import React, { ChangeEvent } from 'react';
+import styled from 'styled-components';
 import * as yup from 'yup';
+
+const StyledTextField = styled(TextField)({
+  marginTop: 10,
+});
 
 interface Fields {
   email: string;
@@ -13,7 +18,8 @@ const validationSchema = yup.object().shape({
   email: yup
     .string()
     .required()
-    .email(),
+    .email()
+    .min(12),
   password: yup
     .string()
     .required()
@@ -23,7 +29,7 @@ const validationSchema = yup.object().shape({
 });
 
 const IndexPage: React.FC = () => {
-  const { getValues, formState, bind } = useForm<Fields>({
+  const { errors, formState, bind } = useForm<Fields>({
     register: {
       email: {
         defaultValue: '12312',
@@ -41,11 +47,23 @@ const IndexPage: React.FC = () => {
     validationSchema,
   });
 
+  // console.log('TCL: IndexPage:React.FC -> formState', formState);
+
   return (
-    <div>
-      <TextField {...bind('email')} />
-      <TextField {...bind('password')} />
-    </div>
+    <Box display="flex" flexDirection="column">
+      <StyledTextField
+        label="email"
+        {...bind('email')}
+        error={!!errors.email?.message}
+        helperText={errors.email?.message}
+      />
+      <StyledTextField
+        label="password"
+        {...bind('password')}
+        error={!!errors.password?.message}
+        helperText={errors.password?.message}
+      />
+    </Box>
   );
 };
 

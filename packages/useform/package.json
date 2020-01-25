@@ -21,7 +21,8 @@
     "test": "jest",
     "prebuild": "rimraf lib",
     "build": "tsc -b tsconfig.json",
-    "watch":"tsc -b -w tsconfig.json",
+    "prewatch": "rimraf lib",
+    "watch": "tsc -b -w tsconfig.dev.json",
     "prepublishOnly": "yarn build"
   },
   "dependencies": {

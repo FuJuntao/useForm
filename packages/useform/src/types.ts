@@ -50,3 +50,13 @@ export type FormOptions<FieldValues extends BasicFieldValues> = {
 export type Handlers<Keys = string> = {
   [Key in Extract<Keys, string>]: (e: any) => void;
 };
+
+export interface FieldError {
+  type: string;
+  message: string;
+  errors: { [Key in string]: string };
+}
+
+export type FieldsErrors<FieldValues extends BasicFieldValues> = {
+  [Key in FieldNames<FieldValues>]: FieldError | null;
+};

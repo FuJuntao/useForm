@@ -1,4 +1,5 @@
-import { Schema } from 'yup';
+import { Schema, ValidationError } from 'yup';
+import mapValidationError from './mapValidationError';
 import { BasicFieldValues, FieldNames } from './types';
 
 async function validateFieldValue<
@@ -10,12 +11,16 @@ async function validateFieldValue<
   fieldName: FieldName,
 ) {
   try {
-    const result = await validationSchema.validateAt(fieldName, values, {
+    await validationSchema.validateAt(fieldName, values, {
       abortEarly: false,
     });
-    console.log('TCL: getValidationEventHandlers -> result', result);
+    return { [fieldName]: null };
   } catch (error) {
-    console.log('TCL: error', error);
+    if (error instanceof ValidationError) {
+      return mapValidationError(error);
+    } else {
+      return error;
+    }
   }
 }
 

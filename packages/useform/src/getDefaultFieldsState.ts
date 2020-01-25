@@ -13,6 +13,7 @@ function getDefaultFieldsState<FieldValues extends BasicFieldValues>(
 
     defaultState[typedKey] = {
       value: defaultValue,
+      error: null,
     };
   });
 

@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/react-helmet": "^5.0.15",
+    "@types/styled-components": "^4.4.2",
     "@types/yup": "^0.26.27",
     "babel-plugin-styled-components": "^1.10.6",
     "babel-preset-gatsby": "^0.2.27",
