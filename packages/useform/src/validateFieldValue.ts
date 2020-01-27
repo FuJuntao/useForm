@@ -1,10 +1,10 @@
 import { Schema, ValidationError } from 'yup';
 import mapValidationError from './mapValidationError';
-import { BasicFieldValues, FieldNames } from './types';
+import { BasicFieldValues } from './types';
 
 async function validateFieldValue<
   FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
+  FieldName extends string
 >(
   validationSchema: Schema<FieldValues>,
   values: FieldValues,

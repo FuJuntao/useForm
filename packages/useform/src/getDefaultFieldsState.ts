@@ -5,7 +5,7 @@ function getDefaultFieldsState<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
 ) {
   const { register } = options;
-  const defaultState = {} as FieldsState<FieldValues>;
+  const defaultState = {} as FieldsState<FieldValues, FieldNames<FieldValues>>;
 
   Object.keys(register).forEach(key => {
     const typedKey = key as FieldNames<FieldValues>;

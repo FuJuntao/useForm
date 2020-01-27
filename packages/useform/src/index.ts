@@ -12,13 +12,7 @@ import {
 } from './formStateReducer';
 import getDefaultFieldsState from './getDefaultFieldsState';
 import getFieldsOptions from './getFieldsOptions';
-import {
-  BasicFieldValues,
-  FieldNames,
-  FieldsErrors,
-  FormOptions,
-  Handlers,
-} from './types';
+import { BasicFieldValues, FieldsErrors, FormOptions, Handlers } from './types';
 import validateFieldValue from './validateFieldValue';
 
 const defaultFormState = {
@@ -32,20 +26,25 @@ const defaultFormState = {
 function useForm<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
 ) {
+  type FieldNames = Extract<keyof FieldValues, string>;
+
   const optionsRef = useRef(options);
   const fieldsOptions = useMemo(() => getFieldsOptions(optionsRef.current), []);
   const [formState, formStateDispatch] = useReducer<
     Reducer<FormState<FieldValues>, FormStateActions>
   >(formStateReducer, defaultFormState);
   const [fieldsState, fieldsStateDispatch] = useReducer<
-    Reducer<FieldsState<FieldValues>, FieldsStateActions<FieldValues>>
+    Reducer<
+      FieldsState<FieldValues, FieldNames>,
+      FieldsStateActions<FieldValues, FieldNames>
+    >
   >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
 
   const getSpecificFieldsState = useCallback(() => {
     const values = {} as FieldValues;
-    const errors = {} as FieldsErrors<FieldValues>;
+    const errors = {} as FieldsErrors<FieldNames>;
     Object.keys(fieldsState).forEach(key => {
-      const typedKey = key as FieldNames<FieldValues>;
+      const typedKey = key as FieldNames;
       const { value, error } = fieldsState[typedKey];
       values[typedKey] = value;
       errors[typedKey] = error;
@@ -53,8 +52,8 @@ function useForm<FieldValues extends BasicFieldValues>(
     return { values, errors };
   }, [fieldsState]);
 
-  const dispatchSetValue = useCallback(
-    <FieldName extends FieldNames<FieldValues>>(
+  const setValue = useCallback(
+    <FieldName extends FieldNames>(
       fieldName: FieldName,
       value: FieldValues[FieldName],
     ) => {
@@ -68,7 +67,7 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
 
   const dispatchUpdateErrors = useCallback(
-    (errors: FieldsErrors<FieldValues>) => {
+    (errors: FieldsErrors<FieldNames>) => {
       fieldsStateDispatch({
         type: fieldsStateActionTypes.UPDATE_ERRORS,
         errors,
@@ -78,18 +77,18 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
 
   const getCollectValueEventHandler = useCallback(
-    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+    <FieldName extends FieldNames>(fieldName: FieldName) => {
       const { getValueFromEvent } = fieldsOptions[fieldName];
       return async (e: any) => {
         const value = getValueFromEvent(e);
-        dispatchSetValue(fieldName, value);
+        setValue(fieldName, value);
       };
     },
-    [dispatchSetValue, fieldsOptions],
+    [setValue, fieldsOptions],
   );
 
   const getValidationEventHandlers = useCallback(
-    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+    <FieldName extends FieldNames>(fieldName: FieldName) => {
       const { validationSchema } = optionsRef.current;
       const { validationTriggers, getValueFromEvent } = fieldsOptions[
         fieldName
@@ -115,7 +114,7 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
 
   const getEventHandlers = useCallback(
-    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+    <FieldName extends FieldNames>(fieldName: FieldName) => {
       const { collectValueTrigger, validationTriggers } = fieldsOptions[
         fieldName
       ];
@@ -139,7 +138,7 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
 
   const bind = useCallback(
-    <FieldName extends FieldNames<FieldValues>>(fieldName: FieldName) => {
+    <FieldName extends FieldNames>(fieldName: FieldName) => {
       const { value } = fieldsState[fieldName];
       return { value, ...getEventHandlers(fieldName) };
     },
@@ -149,6 +148,7 @@ function useForm<FieldValues extends BasicFieldValues>(
   return {
     formState,
     bind,
+    setValue,
     ...getSpecificFieldsState(),
   };
 }

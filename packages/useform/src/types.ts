@@ -4,44 +4,35 @@ export type BasicFieldValues = Record<string, any>;
 
 export type FieldNames<FieldValues> = Extract<keyof FieldValues, string>;
 
-export type GetValueFromEvent<
-  FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
-> = (e: any) => FieldValues[FieldName];
+export type GetValueFromEvent<T = any> = (e: any) => T;
 
-type ValidationMode = 'onSubmit' | 'onChange';
-
-interface RegisterOptions<
-  FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
-> {
-  defaultValue: FieldValues[FieldName];
-  getValueFromEvent?: GetValueFromEvent<FieldValues, FieldName>;
+interface RegisterOptions<T> {
+  defaultValue: T;
+  getValueFromEvent?: GetValueFromEvent<T>;
   collectValueTrigger?: string;
   validationTriggers?: string | string[];
 }
 
 export type Register<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: RegisterOptions<FieldValues, Key>;
+  [Key in FieldNames<FieldValues>]: RegisterOptions<FieldValues[Key]>;
 };
 
-interface FieldOptions<
-  FieldValues extends BasicFieldValues,
-  FieldName extends FieldNames<FieldValues>
-> {
-  defaultValue: FieldValues[FieldName];
-  getValueFromEvent: GetValueFromEvent<FieldValues, FieldName>;
+interface FieldOptions<T> {
+  defaultValue: T;
+  getValueFromEvent: GetValueFromEvent<T>;
   collectValueTrigger: string;
   validationTriggers: string[];
 }
 
 export type FieldsOptions<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: FieldOptions<FieldValues, Key>;
+  [Key in FieldNames<FieldValues>]: FieldOptions<FieldValues[Key]>;
 };
+
+type ValidationMode = 'onSubmit' | 'onChange';
 
 export type FormOptions<FieldValues extends BasicFieldValues> = {
   register: Register<FieldValues>;
-  getValueFromEvent?: GetValueFromEvent<FieldValues, any>;
+  getValueFromEvent?: GetValueFromEvent;
   collectValueTrigger?: string;
   validationMode?: ValidationMode;
   validationSchema?: Schema<FieldValues>;
@@ -57,6 +48,6 @@ export interface FieldError {
   errors: { [Key in string]: string };
 }
 
-export type FieldsErrors<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: FieldError | null;
+export type FieldsErrors<T extends string> = {
+  [Key in T]: FieldError | null;
 };
