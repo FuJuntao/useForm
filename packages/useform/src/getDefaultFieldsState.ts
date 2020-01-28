@@ -1,14 +1,14 @@
 import { State as FieldsState } from './fieldsStateReducer';
-import { BasicFieldValues, FieldNames, FormOptions } from './types';
+import { BasicFieldValues, FormOptions } from './types';
 
 function getDefaultFieldsState<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
 ) {
   const { register } = options;
-  const defaultState = {} as FieldsState<FieldValues, FieldNames<FieldValues>>;
+  const defaultState = {} as FieldsState<FieldValues>;
 
   Object.keys(register).forEach(key => {
-    const typedKey = key as FieldNames<FieldValues>;
+    const typedKey = key as keyof FieldValues;
     let { defaultValue } = register[typedKey];
 
     defaultState[typedKey] = {

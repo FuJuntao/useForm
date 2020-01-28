@@ -2,8 +2,6 @@ import { Schema } from 'yup';
 
 export type BasicFieldValues = Record<string, any>;
 
-export type FieldNames<FieldValues> = Extract<keyof FieldValues, string>;
-
 export type GetValueFromEvent<T = any> = (e: any) => T;
 
 interface RegisterOptions<T> {
@@ -14,7 +12,7 @@ interface RegisterOptions<T> {
 }
 
 export type Register<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: RegisterOptions<FieldValues[Key]>;
+  [Key in keyof FieldValues]: RegisterOptions<FieldValues[Key]>;
 };
 
 interface FieldOptions<T> {
@@ -25,7 +23,7 @@ interface FieldOptions<T> {
 }
 
 export type FieldsOptions<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: FieldOptions<FieldValues[Key]>;
+  [Key in keyof FieldValues]: FieldOptions<FieldValues[Key]>;
 };
 
 type ValidationMode = 'onSubmit' | 'onChange';
@@ -48,6 +46,6 @@ export interface FieldError {
   errors: { [Key in string]: string };
 }
 
-export type FieldsErrors<T extends string> = {
-  [Key in T]: FieldError | null;
+export type FieldsErrors<FieldValues extends BasicFieldValues> = {
+  [Key in keyof FieldValues]: FieldError | null;
 };

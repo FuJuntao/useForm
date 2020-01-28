@@ -34,15 +34,12 @@ function useForm<FieldValues extends BasicFieldValues>(
     Reducer<FormState<FieldValues>, FormStateActions>
   >(formStateReducer, defaultFormState);
   const [fieldsState, fieldsStateDispatch] = useReducer<
-    Reducer<
-      FieldsState<FieldValues, FieldNames>,
-      FieldsStateActions<FieldValues, FieldNames>
-    >
+    Reducer<FieldsState<FieldValues>, FieldsStateActions<FieldValues>>
   >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
 
   const getSpecificFieldsState = useCallback(() => {
     const values = {} as FieldValues;
-    const errors = {} as FieldsErrors<FieldNames>;
+    const errors = {} as FieldsErrors<FieldValues>;
     Object.keys(fieldsState).forEach(key => {
       const typedKey = key as FieldNames;
       const { value, error } = fieldsState[typedKey];
@@ -67,7 +64,7 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
 
   const dispatchUpdateErrors = useCallback(
-    (errors: FieldsErrors<FieldNames>) => {
+    (errors: FieldsErrors<FieldValues>) => {
       fieldsStateDispatch({
         type: fieldsStateActionTypes.UPDATE_ERRORS,
         errors,

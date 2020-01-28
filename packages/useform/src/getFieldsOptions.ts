@@ -1,10 +1,5 @@
 import defaultGetValueFromEvent from './defaultGetValueFromEvent';
-import {
-  BasicFieldValues,
-  FieldNames,
-  FieldsOptions,
-  FormOptions,
-} from './types';
+import { BasicFieldValues, FieldsOptions, FormOptions } from './types';
 
 const DEFAULT_COLLECT_VALUE_TRIGGER = 'onChange';
 const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
@@ -16,7 +11,7 @@ function getFieldsOptions<FieldValues extends BasicFieldValues>(
   const fieldsOptions = {} as FieldsOptions<FieldValues>;
 
   Object.keys(register).forEach(key => {
-    const typedKey = key as FieldNames<FieldValues>;
+    const typedKey = key as keyof FieldValues;
     let {
       defaultValue,
       getValueFromEvent,

@@ -1,4 +1,4 @@
-import { BasicFieldValues, FieldError, FieldNames } from '../types';
+import { BasicFieldValues, FieldError } from '../types';
 import { Actions } from './actions';
 import { SET_VALUE, UPDATE_ERRORS } from './actionTypes';
 
@@ -7,13 +7,13 @@ interface FieldState<T> {
   error: FieldError | null;
 }
 
-export type State<FieldValues extends BasicFieldValues, Keys extends string> = {
-  [Key in Keys]: FieldState<FieldValues[Key]>;
+export type State<FieldValues extends BasicFieldValues> = {
+  [Key in keyof FieldValues]: FieldState<FieldValues[Key]>;
 };
 
 export function reducer<FieldValues extends BasicFieldValues>(
-  state: State<FieldValues, FieldNames<FieldValues>>,
-  action: Actions<FieldValues, FieldNames<FieldValues>>,
+  state: State<FieldValues>,
+  action: Actions<FieldValues>,
 ) {
   switch (action.type) {
     case SET_VALUE: {
@@ -25,7 +25,7 @@ export function reducer<FieldValues extends BasicFieldValues>(
       if (!errors) return state;
       const newState = { ...state };
       Object.entries(errors).forEach(([key, error]) => {
-        newState[key as FieldNames<FieldValues>].error = error;
+        newState[key as keyof FieldValues].error = error;
       });
       return newState;
     }

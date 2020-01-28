@@ -1,20 +1,17 @@
 import { BasicFieldValues, FieldsErrors } from '../types';
 import { SET_VALUE, UPDATE_ERRORS } from './actionTypes';
 
-type ActionSetValue<K extends string, T> = {
+type ActionSetValue<K, T> = {
   type: typeof SET_VALUE;
   key: K;
   value: T;
 };
 
-type ActionUpdateErrors<T extends string> = {
+type ActionUpdateErrors<FieldValues extends BasicFieldValues> = {
   type: typeof UPDATE_ERRORS;
-  errors: FieldsErrors<T>;
+  errors: FieldsErrors<FieldValues>;
 };
 
-export type Actions<
-  FieldValues extends BasicFieldValues,
-  FieldNames extends string
-> =
-  | ActionSetValue<FieldNames, FieldValues[FieldNames]>
-  | ActionUpdateErrors<FieldNames>;
+export type Actions<FieldValues extends BasicFieldValues> =
+  | ActionSetValue<keyof FieldValues, FieldValues>
+  | ActionUpdateErrors<FieldValues>;

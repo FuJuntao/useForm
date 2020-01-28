@@ -1,9 +1,6 @@
-import { BasicFieldValues } from '../types';
-
-export type Actions = import('./actions').Actions;
-
-export type State<
-  FieldValues extends BasicFieldValues
-> = import('./reducer').State<FieldValues>;
+/* eslint-disable prettier/prettier */
+import type { Actions } from './actions';
+import type { State } from './reducer';
 
 export { reducer } from './reducer';
+export type { Actions, State };

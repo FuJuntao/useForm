@@ -1,11 +1,11 @@
-import { FieldNames, BasicFieldValues } from '../types';
+import { BasicFieldValues } from '../types';
 import { Actions } from './actions';
 import { MARK_FORM_DIRTY, MARK_FORM_SUBMITTED } from './actionTypes';
 
 export type State<FieldValues extends BasicFieldValues> = {
   dirty: boolean;
   hasSubmitted: boolean;
-  touched: FieldNames<FieldValues>[];
+  touched: Partial<keyof FieldValues>[];
   submitCount: number;
   isValid: boolean;
 };

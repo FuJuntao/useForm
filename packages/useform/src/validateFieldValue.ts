@@ -17,7 +17,7 @@ async function validateFieldValue<
     return { [fieldName]: null };
   } catch (error) {
     if (error instanceof ValidationError) {
-      return mapValidationError(error);
+      return mapValidationError<FieldValues>(error);
     } else {
       return error;
     }

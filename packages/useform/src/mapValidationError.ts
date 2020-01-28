@@ -1,13 +1,13 @@
 import { ValidationError } from 'yup';
-import { FieldsErrors } from './types';
+import { BasicFieldValues, FieldsErrors } from './types';
 
-export default function mapValidationError<FieldName extends string>(
-  validationError: ValidationError,
-) {
-  const fieldsErrors = {} as FieldsErrors<FieldName>;
+export default function mapValidationError<
+  FieldValues extends BasicFieldValues
+>(validationError: ValidationError) {
+  const fieldsErrors = {} as FieldsErrors<FieldValues>;
 
   validationError.inner.forEach(innerError => {
-    const fieldPath = innerError.path as FieldName;
+    const fieldPath = innerError.path as keyof FieldValues;
     const previousError = fieldsErrors[fieldPath];
     fieldsErrors[fieldPath] = {
       type: previousError?.type ?? innerError.type,
