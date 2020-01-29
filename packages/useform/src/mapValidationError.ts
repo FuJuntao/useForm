@@ -1,5 +1,5 @@
 import { ValidationError } from 'yup';
-import { BasicFieldValues, FieldsErrors } from './types';
+import { BasicFieldValues, FieldNames, FieldsErrors } from './types';
 
 export default function mapValidationError<
   FieldValues extends BasicFieldValues
@@ -7,7 +7,7 @@ export default function mapValidationError<
   const fieldsErrors = {} as FieldsErrors<FieldValues>;
 
   validationError.inner.forEach(innerError => {
-    const fieldPath = innerError.path as keyof FieldValues;
+    const fieldPath = innerError.path as FieldNames<FieldValues>;
     const previousError = fieldsErrors[fieldPath];
     fieldsErrors[fieldPath] = {
       type: previousError?.type ?? innerError.type,

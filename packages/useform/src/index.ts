@@ -1,27 +1,29 @@
-import { Reducer, useCallback, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import * as yup from 'yup';
+import defaultGetValueFromEvent from './defaultGetValueFromEvent';
 import {
-  Actions as FieldsStateActions,
-  actionTypes as fieldsStateActionTypes,
-  reducer as fieldsStateReducer,
-  State as FieldsState,
-} from './fieldsStateReducer';
-import {
-  Actions as FormStateActions,
-  reducer as formStateReducer,
-  State as FormState,
-} from './formStateReducer';
-import getDefaultFieldsState from './getDefaultFieldsState';
-import getFieldsOptions from './getFieldsOptions';
-import { BasicFieldValues, FieldsErrors, FormOptions, Handlers } from './types';
+  BasicFieldValues,
+  FieldErrorsState,
+  FieldOptions,
+  FormOptions,
+  Handlers,
+  Register,
+  RegisterOption,
+} from './types';
 import validateFieldValue from './validateFieldValue';
 
-const defaultFormState = {
-  dirty: false,
-  hasSubmitted: false,
-  touched: [],
-  submitCount: 0,
-  isValid: true,
-};
+function getValidationTriggers(validationTriggers?: string | string[]) {
+  if (Array.isArray(validationTriggers)) {
+    return validationTriggers;
+  }
+  if (validationTriggers) {
+    return [validationTriggers];
+  }
+  return validationTriggers;
+}
+
+const DEFAULT_COLLECT_VALUE_TRIGGER = 'onChange';
+const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
 
 function useForm<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
@@ -29,92 +31,119 @@ function useForm<FieldValues extends BasicFieldValues>(
   type FieldNames = Extract<keyof FieldValues, string>;
 
   const optionsRef = useRef(options);
-  const fieldsOptions = useMemo(() => getFieldsOptions(optionsRef.current), []);
-  const [formState, formStateDispatch] = useReducer<
-    Reducer<FormState<FieldValues>, FormStateActions>
-  >(formStateReducer, defaultFormState);
-  const [fieldsState, fieldsStateDispatch] = useReducer<
-    Reducer<FieldsState<FieldValues>, FieldsStateActions<FieldValues>>
-  >(fieldsStateReducer, getDefaultFieldsState(optionsRef.current));
-
-  const getSpecificFieldsState = useCallback(() => {
-    const values = {} as FieldValues;
-    const errors = {} as FieldsErrors<FieldValues>;
-    Object.keys(fieldsState).forEach(key => {
-      const typedKey = key as FieldNames;
-      const { value, error } = fieldsState[typedKey];
-      values[typedKey] = value;
-      errors[typedKey] = error;
-    });
-    return { values, errors };
-  }, [fieldsState]);
-
-  const setValue = useCallback(
-    <FieldName extends FieldNames>(
-      fieldName: FieldName,
-      value: FieldValues[FieldName],
-    ) => {
-      fieldsStateDispatch({
-        type: fieldsStateActionTypes.SET_VALUE,
-        key: fieldName,
-        value,
-      });
-    },
-    [],
+  const [values, setValues] = useState<FieldValues>(
+    optionsRef.current.defaultValues,
   );
+  const [errors, setErrors] = useState<FieldErrorsState<FieldValues>>(null);
+  const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
 
-  const dispatchUpdateErrors = useCallback(
-    (errors: FieldsErrors<FieldValues>) => {
-      fieldsStateDispatch({
-        type: fieldsStateActionTypes.UPDATE_ERRORS,
-        errors,
-      });
+  const validationSchema = useMemo(() => {
+    if (!fieldOptions) return null;
+    const schema = {} as {
+      [Key in keyof FieldValues]: yup.Schema<FieldValues[Key]>;
+    };
+    Object.entries(fieldOptions).forEach(item => {
+      const key = item[0] as keyof FieldValues;
+      const validationSchema = item[1]?.validationSchema;
+      if (validationSchema) {
+        schema[key] = validationSchema;
+      }
+    });
+    return yup.object().shape(schema);
+  }, [fieldOptions]);
+
+  const register: Register<FieldValues> = useCallback(
+    (...registerOptions: any[]) => {
+      if (Array.isArray(registerOptions))
+        registerOptions.forEach(
+          (registerOption: RegisterOption<FieldValues>) => {
+            const { name, defaultValue } = registerOption;
+
+            setValues(values => ({
+              ...values,
+              [name]: values[name] ?? defaultValue ?? null,
+            }));
+
+            setFieldOptions(fieldOptions => ({
+              ...fieldOptions,
+              [name]: {
+                getValueFromEvent:
+                  registerOption.getValueFromEvent ??
+                  optionsRef.current.getValueFromEvent ??
+                  defaultGetValueFromEvent,
+                collectValueTrigger:
+                  registerOption.collectValueTrigger ??
+                  optionsRef.current.collectValueTrigger ??
+                  DEFAULT_COLLECT_VALUE_TRIGGER,
+                validationTriggers:
+                  getValidationTriggers(registerOption.validationTriggers) ??
+                  getValidationTriggers(
+                    optionsRef.current.validationTriggers,
+                  ) ??
+                  DEFAULT_VALIDATION_TRIGGERS,
+                validationSchema: registerOption.validationSchema,
+              },
+            }));
+          },
+        );
     },
     [],
   );
 
   const getCollectValueEventHandler = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const { getValueFromEvent } = fieldsOptions[fieldName];
+      const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
       return async (e: any) => {
-        const value = getValueFromEvent(e);
-        setValue(fieldName, value);
+        if (getValueFromEvent) {
+          const value = getValueFromEvent(e);
+          setValues(values => ({ ...values, [fieldName]: value }));
+        }
       };
     },
-    [setValue, fieldsOptions],
+    [fieldOptions],
   );
 
   const getValidationEventHandlers = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const { validationSchema } = optionsRef.current;
-      const { validationTriggers, getValueFromEvent } = fieldsOptions[
-        fieldName
-      ];
+      const validationTriggers = fieldOptions?.[fieldName]?.validationTriggers;
+      const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
       const handlers: Handlers = {};
-      validationTriggers.forEach(item => {
-        handlers[item] = async (e: any) => {
-          const value = getValueFromEvent(e);
-          if (validationSchema) {
-            const { values } = getSpecificFieldsState();
-            values[fieldName] = value;
-            const validationResult = await validateFieldValue<
-              FieldValues,
-              FieldName
-            >(validationSchema, values, fieldName);
-            dispatchUpdateErrors(validationResult);
-          }
-        };
-      });
+      if (validationTriggers) {
+        validationTriggers.forEach(item => {
+          handlers[item] = async (e: any) => {
+            if (getValueFromEvent && validationSchema) {
+              const value = getValueFromEvent(e);
+              const newValues = { ...values, [fieldName]: value };
+              const validationResult = await validateFieldValue<FieldValues>(
+                validationSchema,
+                newValues,
+                fieldName,
+              );
+              setErrors(errors => {
+                const newErrors: FieldErrorsState<FieldValues> = errors
+                  ? { ...errors }
+                  : {};
+                if (!validationResult) {
+                  delete newErrors[fieldName];
+                }
+                return { ...newErrors, ...validationResult };
+              });
+            }
+          };
+        });
+      }
       return handlers;
     },
-    [dispatchUpdateErrors, fieldsOptions, getSpecificFieldsState],
+    [fieldOptions, validationSchema, values],
   );
 
   const getEventHandlers = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const { collectValueTrigger, validationTriggers } = fieldsOptions[
-        fieldName
-      ];
+      const collectValueTrigger =
+        fieldOptions?.[fieldName]?.collectValueTrigger;
+      const validationTriggers = fieldOptions?.[fieldName]?.validationTriggers;
+      if (!collectValueTrigger || !validationTriggers) return {};
+
       const collectValueEventHandler = getCollectValueEventHandler(fieldName);
       const validationEventHandlers = getValidationEventHandlers(fieldName);
       if (validationTriggers.includes(collectValueTrigger)) {
@@ -127,27 +156,22 @@ function useForm<FieldValues extends BasicFieldValues>(
         };
       }
       return {
-        collectValueTrigger: collectValueEventHandler,
+        [collectValueTrigger]: collectValueEventHandler,
         ...validationEventHandlers,
       };
     },
-    [fieldsOptions, getCollectValueEventHandler, getValidationEventHandlers],
+    [fieldOptions, getCollectValueEventHandler, getValidationEventHandlers],
   );
 
   const bind = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const { value } = fieldsState[fieldName];
+      const value = values[fieldName];
       return { value, ...getEventHandlers(fieldName) };
     },
-    [fieldsState, getEventHandlers],
+    [getEventHandlers, values],
   );
 
-  return {
-    formState,
-    bind,
-    setValue,
-    ...getSpecificFieldsState(),
-  };
+  return { register, bind, values, errors };
 }
 
 export default useForm;
