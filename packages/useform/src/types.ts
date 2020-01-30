@@ -9,14 +9,12 @@ export type FieldNames<FieldValues extends BasicFieldValues> = Extract<
 
 type GetValueFromEvent<T = any> = (e: any) => T;
 
-type ValidationMode = 'onSubmit' | 'onChange';
-
 export interface FormOptions<FieldValues> {
   defaultValues: FieldValues;
   getValueFromEvent?: GetValueFromEvent;
   collectValueTrigger?: string;
   validationTriggers?: string | string[];
-  validationMode?: ValidationMode;
+  startValidationAfterSubmitting?: boolean;
 }
 
 export interface RegisterOption<
@@ -29,6 +27,7 @@ export interface RegisterOption<
   collectValueTrigger?: string;
   validationTriggers?: string | string[];
   validationSchema?: Schema<FieldValues[Key]>;
+  startValidationAfterSubmitting?: boolean;
 }
 
 export type FieldOptions<FieldValues> = {
@@ -37,6 +36,7 @@ export type FieldOptions<FieldValues> = {
     collectValueTrigger: string;
     validationTriggers: string[];
     validationSchema?: Schema<FieldValues[Key]>;
+    startValidationAfterSubmitting: boolean;
   };
 };
 
@@ -72,3 +72,10 @@ export type FieldsErrors<FieldValues extends BasicFieldValues> = {
 export type FieldErrorsState<FieldValues extends BasicFieldValues> = Partial<
   FieldsErrors<FieldValues>
 > | null;
+
+export type FormState<FieldValues extends BasicFieldValues> = {
+  dirty: boolean;
+  touched: { [Key in FieldNames<FieldValues>]?: boolean };
+  hasSubmitted: boolean;
+  submitCount: number;
+};

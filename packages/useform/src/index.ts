@@ -5,12 +5,24 @@ import {
   BasicFieldValues,
   FieldErrorsState,
   FieldOptions,
+  FieldsErrors,
   FormOptions,
+  FormState,
   Handlers,
   Register,
   RegisterOption,
 } from './types';
 import validateFieldValue from './validateFieldValue';
+
+const DEFAULT_COLLECT_VALUE_TRIGGER = 'onChange';
+const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
+
+const defaultFormState = {
+  dirty: false,
+  hasSubmitted: false,
+  touched: {},
+  submitCount: 0,
+};
 
 function getValidationTriggers(validationTriggers?: string | string[]) {
   if (Array.isArray(validationTriggers)) {
@@ -21,9 +33,6 @@ function getValidationTriggers(validationTriggers?: string | string[]) {
   }
   return validationTriggers;
 }
-
-const DEFAULT_COLLECT_VALUE_TRIGGER = 'onChange';
-const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
 
 function useForm<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
@@ -36,6 +45,9 @@ function useForm<FieldValues extends BasicFieldValues>(
   );
   const [errors, setErrors] = useState<FieldErrorsState<FieldValues>>(null);
   const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
+  const [formState, setFormState] = useState<FormState<FieldValues>>(
+    defaultFormState,
+  );
 
   const validationSchema = useMemo(() => {
     if (!fieldOptions) return null;
@@ -82,6 +94,10 @@ function useForm<FieldValues extends BasicFieldValues>(
                   ) ??
                   DEFAULT_VALIDATION_TRIGGERS,
                 validationSchema: registerOption.validationSchema,
+                startValidationAfterSubmitting:
+                  registerOption.startValidationAfterSubmitting ??
+                  optionsRef.current.startValidationAfterSubmitting ??
+                  true,
               },
             }));
           },
@@ -90,28 +106,73 @@ function useForm<FieldValues extends BasicFieldValues>(
     [],
   );
 
+  const markTouched = useCallback(
+    <FieldName extends FieldNames>(fieldName: FieldName) => {
+      if (!formState.touched[fieldName]) {
+        const touched = { ...formState.touched, [fieldName]: true };
+        setFormState({ ...formState, dirty: true, touched });
+      }
+    },
+    [formState],
+  );
+
+  const setValue = useCallback(
+    <FieldName extends FieldNames>(
+      fieldName: FieldName,
+      value: FieldValues[FieldName],
+    ) => {
+      setValues(values => ({ ...values, [fieldName]: value }));
+      markTouched(fieldName);
+    },
+    [markTouched],
+  );
+
+  const setError = useCallback(
+    <FieldName extends FieldNames>(
+      fieldName: FieldName,
+      error: FieldsErrors<FieldValues> | null,
+    ) => {
+      setErrors(errors => {
+        const newErrors: FieldErrorsState<FieldValues> = { ...errors };
+        if (!error) {
+          delete newErrors[fieldName];
+          return newErrors;
+        }
+        return { ...newErrors, ...error };
+      });
+      markTouched(fieldName);
+    },
+    [markTouched],
+  );
+
   const getCollectValueEventHandler = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
       const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
       return async (e: any) => {
         if (getValueFromEvent) {
           const value = getValueFromEvent(e);
-          setValues(values => ({ ...values, [fieldName]: value }));
+          setValue(fieldName, value);
         }
       };
     },
-    [fieldOptions],
+    [fieldOptions, setValue],
   );
 
   const getValidationEventHandlers = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
       const validationTriggers = fieldOptions?.[fieldName]?.validationTriggers;
       const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
+      const startValidationAfterSubmitting =
+        fieldOptions?.[fieldName]?.startValidationAfterSubmitting;
       const handlers: Handlers = {};
       if (validationTriggers) {
         validationTriggers.forEach(item => {
           handlers[item] = async (e: any) => {
-            if (getValueFromEvent && validationSchema) {
+            if (
+              getValueFromEvent &&
+              validationSchema &&
+              (!startValidationAfterSubmitting || formState.hasSubmitted)
+            ) {
               const value = getValueFromEvent(e);
               const newValues = { ...values, [fieldName]: value };
               const validationResult = await validateFieldValue<FieldValues>(
@@ -119,22 +180,14 @@ function useForm<FieldValues extends BasicFieldValues>(
                 newValues,
                 fieldName,
               );
-              setErrors(errors => {
-                const newErrors: FieldErrorsState<FieldValues> = errors
-                  ? { ...errors }
-                  : {};
-                if (!validationResult) {
-                  delete newErrors[fieldName];
-                }
-                return { ...newErrors, ...validationResult };
-              });
+              setError(fieldName, validationResult);
             }
           };
         });
       }
       return handlers;
     },
-    [fieldOptions, validationSchema, values],
+    [fieldOptions, formState.hasSubmitted, setError, validationSchema, values],
   );
 
   const getEventHandlers = useCallback(
@@ -146,18 +199,14 @@ function useForm<FieldValues extends BasicFieldValues>(
 
       const collectValueEventHandler = getCollectValueEventHandler(fieldName);
       const validationEventHandlers = getValidationEventHandlers(fieldName);
-      if (validationTriggers.includes(collectValueTrigger)) {
-        return {
-          ...validationEventHandlers,
-          [collectValueTrigger]: (e: any) => {
-            collectValueEventHandler(e);
-            validationEventHandlers[collectValueTrigger](e);
-          },
-        };
-      }
       return {
-        [collectValueTrigger]: collectValueEventHandler,
         ...validationEventHandlers,
+        [collectValueTrigger]: (e: any) => {
+          collectValueEventHandler(e);
+          if (validationTriggers.includes(collectValueTrigger)) {
+            validationEventHandlers[collectValueTrigger](e);
+          }
+        },
       };
     },
     [fieldOptions, getCollectValueEventHandler, getValidationEventHandlers],
@@ -171,7 +220,24 @@ function useForm<FieldValues extends BasicFieldValues>(
     [getEventHandlers, values],
   );
 
-  return { register, bind, values, errors };
+  const handleSubmit = useCallback(() => {
+    setFormState(formState => ({
+      ...formState,
+      hasSubmitted: true,
+      submitCount: formState.submitCount + 1,
+    }));
+  }, []);
+
+  return {
+    register,
+    bind,
+    formState,
+    values,
+    setValue,
+    errors,
+    setError,
+    handleSubmit,
+  };
 }
 
 export default useForm;
