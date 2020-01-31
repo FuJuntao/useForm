@@ -3,9 +3,8 @@ import * as yup from 'yup';
 import defaultGetValueFromEvent from './defaultGetValueFromEvent';
 import {
   BasicFieldValues,
-  FieldErrorsState,
+  FieldErrors,
   FieldOptions,
-  FieldsErrors,
   FormOptions,
   FormState,
   Handlers,
@@ -13,6 +12,7 @@ import {
   RegisterOption,
 } from './types';
 import validateFieldValue from './validateFieldValue';
+import validateFieldValues from './validateFieldValues';
 
 const DEFAULT_COLLECT_VALUE_TRIGGER = 'onChange';
 const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
@@ -20,7 +20,6 @@ const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
 const defaultFormState = {
   dirty: false,
   hasSubmitted: false,
-  touched: {},
   submitCount: 0,
 };
 
@@ -43,11 +42,9 @@ function useForm<FieldValues extends BasicFieldValues>(
   const [values, setValues] = useState<FieldValues>(
     optionsRef.current.defaultValues,
   );
-  const [errors, setErrors] = useState<FieldErrorsState<FieldValues>>(null);
+  const [errors, setErrors] = useState<FieldErrors<FieldValues> | null>(null);
   const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
-  const [formState, setFormState] = useState<FormState<FieldValues>>(
-    defaultFormState,
-  );
+  const [formState, setFormState] = useState<FormState>(defaultFormState);
 
   const validationSchema = useMemo(() => {
     if (!fieldOptions) return null;
@@ -106,15 +103,9 @@ function useForm<FieldValues extends BasicFieldValues>(
     [],
   );
 
-  const markTouched = useCallback(
-    <FieldName extends FieldNames>(fieldName: FieldName) => {
-      if (!formState.touched[fieldName]) {
-        const touched = { ...formState.touched, [fieldName]: true };
-        setFormState({ ...formState, dirty: true, touched });
-      }
-    },
-    [formState],
-  );
+  const markDirty = useCallback(() => {
+    setFormState(formState => ({ ...formState, dirty: true }));
+  }, []);
 
   const setValue = useCallback(
     <FieldName extends FieldNames>(
@@ -122,27 +113,26 @@ function useForm<FieldValues extends BasicFieldValues>(
       value: FieldValues[FieldName],
     ) => {
       setValues(values => ({ ...values, [fieldName]: value }));
-      markTouched(fieldName);
+      markDirty();
     },
-    [markTouched],
+    [markDirty],
   );
 
   const setError = useCallback(
     <FieldName extends FieldNames>(
       fieldName: FieldName,
-      error: FieldsErrors<FieldValues> | null,
+      error: FieldErrors<FieldValues> | null,
     ) => {
       setErrors(errors => {
-        const newErrors: FieldErrorsState<FieldValues> = { ...errors };
+        const newErrors: FieldErrors<FieldValues> = { ...errors };
         if (!error) {
           delete newErrors[fieldName];
           return newErrors;
         }
         return { ...newErrors, ...error };
       });
-      markTouched(fieldName);
     },
-    [markTouched],
+    [],
   );
 
   const getCollectValueEventHandler = useCallback(
@@ -220,13 +210,26 @@ function useForm<FieldValues extends BasicFieldValues>(
     [getEventHandlers, values],
   );
 
-  const handleSubmit = useCallback(() => {
-    setFormState(formState => ({
-      ...formState,
-      hasSubmitted: true,
-      submitCount: formState.submitCount + 1,
-    }));
-  }, []);
+  const handleSubmit = useCallback(
+    (onSubmit: (data: FieldValues) => void) => async (e: any) => {
+      setFormState(formState => ({
+        ...formState,
+        hasSubmitted: true,
+        submitCount: formState.submitCount + 1,
+      }));
+      if (validationSchema) {
+        const validationResult = await validateFieldValues<FieldValues>(
+          validationSchema,
+          values,
+        );
+        setErrors(validationResult);
+        if (!validationResult) {
+          onSubmit(values);
+        }
+      }
+    },
+    [validationSchema, values],
+  );
 
   return {
     register,

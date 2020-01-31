@@ -41,11 +41,15 @@ const IndexPage: React.FC = () => {
           .required()
           .min(6)
           .max(10),
-        validateAfterSubmitting: false,
+        startValidationAfterSubmitting: false,
       },
       { name: 'date', validationSchema: yup.date().required() },
     );
   }, [register]);
+
+  const onSubmit = (data: Fields) => {
+    console.log('TCL: onSubmit -> data', data);
+  };
 
   console.log('TCL: IndexPage:React.FC -> formState', formState);
   // console.log('TCL: IndexPage:React.FC -> values', values);
@@ -65,7 +69,7 @@ const IndexPage: React.FC = () => {
         error={!!errors?.password?.message}
         helperText={errors?.password?.message}
       />
-      <Button onClick={handleSubmit}>submit</Button>
+      <Button onClick={handleSubmit(onSubmit)}>submit</Button>
     </Box>
   );
 };

@@ -65,17 +65,12 @@ export interface FieldError {
   errors: { [Key in string]: string };
 }
 
-export type FieldsErrors<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]: FieldError;
+export type FieldErrors<FieldValues extends BasicFieldValues> = {
+  [Key in FieldNames<FieldValues>]?: FieldError;
 };
 
-export type FieldErrorsState<FieldValues extends BasicFieldValues> = Partial<
-  FieldsErrors<FieldValues>
-> | null;
-
-export type FormState<FieldValues extends BasicFieldValues> = {
+export type FormState = {
   dirty: boolean;
-  touched: { [Key in FieldNames<FieldValues>]?: boolean };
   hasSubmitted: boolean;
   submitCount: number;
 };
