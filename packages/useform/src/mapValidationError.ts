@@ -3,21 +3,30 @@ import { BasicFieldValues, FieldErrors, FieldNames } from './types';
 
 export default function mapValidationError<
   FieldValues extends BasicFieldValues
->(validationError: ValidationError) {
+>(validationErrors: ValidationError | ValidationError[]) {
   const fieldsErrors = {} as FieldErrors<FieldValues>;
 
-  validationError.inner.forEach(innerError => {
-    const fieldPath = innerError.path as FieldNames<FieldValues>;
-    const previousError = fieldsErrors[fieldPath];
+  if (Array.isArray(validationErrors)) {
+    validationErrors.forEach(error => {
+      const fieldPath = error.path as FieldNames<FieldValues>;
+      const previousError = fieldsErrors[fieldPath];
+      fieldsErrors[fieldPath] = {
+        type: previousError?.type ?? error.type,
+        message: previousError?.message ?? error.message,
+        errors: {
+          ...previousError?.errors,
+          [error.type]: error.message,
+        },
+      };
+    });
+  } else {
+    const fieldPath = validationErrors.path as FieldNames<FieldValues>;
     fieldsErrors[fieldPath] = {
-      type: previousError?.type ?? innerError.type,
-      message: previousError?.message ?? innerError.message,
-      errors: {
-        ...previousError?.errors,
-        [innerError.type]: innerError.message,
-      },
+      type: validationErrors.type,
+      message: validationErrors.message,
+      errors: {},
     };
-  });
+  }
 
   return fieldsErrors;
 }

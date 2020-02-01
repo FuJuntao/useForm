@@ -5,11 +5,13 @@ import {
   BasicFieldValues,
   FieldErrors,
   FieldOptions,
+  FieldValidationStatus,
   FormOptions,
   FormState,
   Handlers,
   Register,
   RegisterOption,
+  ValidationStatus,
 } from './types';
 import validateFieldValue from './validateFieldValue';
 import validateFieldValues from './validateFieldValues';
@@ -19,6 +21,7 @@ const DEFAULT_VALIDATION_TRIGGERS = ['onChange'];
 
 const defaultFormState = {
   dirty: false,
+  isSubmitting: false,
   hasSubmitted: false,
   submitCount: 0,
 };
@@ -39,11 +42,14 @@ function useForm<FieldValues extends BasicFieldValues>(
   type FieldNames = Extract<keyof FieldValues, string>;
 
   const optionsRef = useRef(options);
+  const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
   const [values, setValues] = useState<FieldValues>(
     optionsRef.current.defaultValues,
   );
   const [errors, setErrors] = useState<FieldErrors<FieldValues> | null>(null);
-  const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
+  const [validationStatus, setValidationSatus] = useState<
+    FieldValidationStatus<FieldValues> | undefined
+  >();
   const [formState, setFormState] = useState<FormState>(defaultFormState);
 
   const validationSchema = useMemo(() => {
@@ -60,6 +66,55 @@ function useForm<FieldValues extends BasicFieldValues>(
     });
     return yup.object().shape(schema);
   }, [fieldOptions]);
+
+  const setIsFormSubmitting = useCallback((isSubmitting: boolean) => {
+    setFormState(formState => ({ ...formState, isSubmitting }));
+  }, []);
+
+  const markDirty = useCallback(() => {
+    setFormState(formState => ({ ...formState, dirty: true }));
+  }, []);
+
+  const setValue = useCallback(
+    <FieldName extends FieldNames>(
+      fieldName: FieldName,
+      value: FieldValues[FieldName],
+    ) => {
+      setValues(values => ({ ...values, [fieldName]: value }));
+      markDirty();
+    },
+    [markDirty],
+  );
+
+  const setError = useCallback(
+    <FieldName extends FieldNames>(
+      fieldName: FieldName,
+      error: FieldErrors<FieldValues> | null,
+    ) => {
+      setErrors(errors => {
+        const newErrors: FieldErrors<FieldValues> = { ...errors };
+        if (!error) {
+          delete newErrors[fieldName];
+          return newErrors;
+        }
+        return { ...newErrors, ...error };
+      });
+    },
+    [],
+  );
+
+  const setFieldValidationSatus = useCallback(
+    <FieldName extends FieldNames>(
+      fieldName: FieldName,
+      status: ValidationStatus,
+    ) => {
+      setValidationSatus(validationStatus => ({
+        ...validationStatus,
+        [fieldName]: status,
+      }));
+    },
+    [],
+  );
 
   const register: Register<FieldValues> = useCallback(
     (...registerOptions: any[]) => {
@@ -97,42 +152,12 @@ function useForm<FieldValues extends BasicFieldValues>(
                   true,
               },
             }));
+
+            setFieldValidationSatus(name, 'none');
           },
         );
     },
-    [],
-  );
-
-  const markDirty = useCallback(() => {
-    setFormState(formState => ({ ...formState, dirty: true }));
-  }, []);
-
-  const setValue = useCallback(
-    <FieldName extends FieldNames>(
-      fieldName: FieldName,
-      value: FieldValues[FieldName],
-    ) => {
-      setValues(values => ({ ...values, [fieldName]: value }));
-      markDirty();
-    },
-    [markDirty],
-  );
-
-  const setError = useCallback(
-    <FieldName extends FieldNames>(
-      fieldName: FieldName,
-      error: FieldErrors<FieldValues> | null,
-    ) => {
-      setErrors(errors => {
-        const newErrors: FieldErrors<FieldValues> = { ...errors };
-        if (!error) {
-          delete newErrors[fieldName];
-          return newErrors;
-        }
-        return { ...newErrors, ...error };
-      });
-    },
-    [],
+    [setFieldValidationSatus],
   );
 
   const getCollectValueEventHandler = useCallback(
@@ -165,11 +190,14 @@ function useForm<FieldValues extends BasicFieldValues>(
             ) {
               const value = getValueFromEvent(e);
               const newValues = { ...values, [fieldName]: value };
+              setFieldValidationSatus(fieldName, 'pending');
               const validationResult = await validateFieldValue<FieldValues>(
                 validationSchema,
                 newValues,
                 fieldName,
+                optionsRef.current.validateOptions,
               );
+              setFieldValidationSatus(fieldName, 'none');
               setError(fieldName, validationResult);
             }
           };
@@ -177,7 +205,14 @@ function useForm<FieldValues extends BasicFieldValues>(
       }
       return handlers;
     },
-    [fieldOptions, formState.hasSubmitted, setError, validationSchema, values],
+    [
+      fieldOptions,
+      formState.hasSubmitted,
+      setError,
+      setFieldValidationSatus,
+      validationSchema,
+      values,
+    ],
   );
 
   const getEventHandlers = useCallback(
@@ -218,17 +253,19 @@ function useForm<FieldValues extends BasicFieldValues>(
         submitCount: formState.submitCount + 1,
       }));
       if (validationSchema) {
+        setIsFormSubmitting(true);
         const validationResult = await validateFieldValues<FieldValues>(
           validationSchema,
           values,
         );
+        setIsFormSubmitting(false);
         setErrors(validationResult);
         if (!validationResult) {
           onSubmit(values);
         }
       }
     },
-    [validationSchema, values],
+    [setIsFormSubmitting, validationSchema, values],
   );
 
   return {
@@ -239,6 +276,8 @@ function useForm<FieldValues extends BasicFieldValues>(
     setValue,
     errors,
     setError,
+    validationStatus,
+    setValidationSatus: setFieldValidationSatus,
     handleSubmit,
   };
 }

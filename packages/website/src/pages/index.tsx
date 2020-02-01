@@ -15,7 +15,14 @@ interface Fields {
 }
 
 const IndexPage: React.FC = () => {
-  const { register, bind, formState, errors, handleSubmit } = useForm<Fields>({
+  const {
+    register,
+    bind,
+    formState,
+    errors,
+    validationStatus,
+    handleSubmit,
+  } = useForm<Fields>({
     defaultValues: {
       email: '12312',
       password: '123123',
@@ -32,7 +39,14 @@ const IndexPage: React.FC = () => {
           .string()
           .required()
           .email()
-          .min(12),
+          .min(12)
+          .test('123123', '123123', () => {
+            return new Promise(resolve => {
+              setTimeout(() => {
+                resolve(false);
+              }, 1000);
+            });
+          }),
       },
       {
         name: 'password',
@@ -51,7 +65,8 @@ const IndexPage: React.FC = () => {
     console.log('TCL: onSubmit -> data', data);
   };
 
-  console.log('TCL: IndexPage:React.FC -> formState', formState);
+  console.log('TCL: IndexPage:React.FC -> validationStatus', validationStatus);
+  // console.log('TCL: IndexPage:React.FC -> formState', formState);
   // console.log('TCL: IndexPage:React.FC -> values', values);
   // console.log('TCL: IndexPage:React.FC -> errors', errors);
 
@@ -69,7 +84,9 @@ const IndexPage: React.FC = () => {
         error={!!errors?.password?.message}
         helperText={errors?.password?.message}
       />
-      <Button onClick={handleSubmit(onSubmit)}>submit</Button>
+      <Button onClick={handleSubmit(onSubmit)}>
+        {formState.isSubmitting ? '...' : 'submit'}
+      </Button>
     </Box>
   );
 };
