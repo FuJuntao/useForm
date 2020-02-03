@@ -9,9 +9,25 @@ const StyledTextField = styled(TextField)({
 });
 
 interface Fields {
-  email: string;
-  password: string;
+  'form.email': string;
+  'form.password': string;
+  date?: Date;
+}
+
+interface NestedFiedlsValues {
+  form: {
+    email: string;
+    password: string;
+  };
   date: Date;
+}
+
+interface NestedFields<T> {
+  form: {
+    email: T;
+    password: T;
+  };
+  date: T;
 }
 
 const IndexPage: React.FC = () => {
@@ -19,13 +35,13 @@ const IndexPage: React.FC = () => {
     register,
     bind,
     formState,
-    errors,
-    validationStatus,
+    getErrors,
+    getValues,
     handleSubmit,
   } = useForm<Fields>({
     defaultValues: {
-      email: '12312',
-      password: '123123',
+      'form.email': '12312',
+      'form.password': '123123',
       date: new Date(),
     },
   });
@@ -33,7 +49,7 @@ const IndexPage: React.FC = () => {
   useEffect(() => {
     register(
       {
-        name: 'email',
+        name: 'form.email',
         validationTriggers: 'onBlur',
         validationSchema: yup
           .string()
@@ -49,7 +65,7 @@ const IndexPage: React.FC = () => {
           }),
       },
       {
-        name: 'password',
+        name: 'form.password',
         validationSchema: yup
           .string()
           .required()
@@ -57,7 +73,7 @@ const IndexPage: React.FC = () => {
           .max(10),
         startValidationAfterSubmitting: false,
       },
-      { name: 'date', validationSchema: yup.date().required() },
+      // { name: 'date', validationSchema: yup.date().required() },
     );
   }, [register]);
 
@@ -65,22 +81,25 @@ const IndexPage: React.FC = () => {
     console.log('TCL: onSubmit -> data', data);
   };
 
-  console.log('TCL: IndexPage:React.FC -> validationStatus', validationStatus);
-  // console.log('TCL: IndexPage:React.FC -> formState', formState);
+  const values = getValues<NestedFiedlsValues>();
+  const errors = getErrors();
+
   // console.log('TCL: IndexPage:React.FC -> values', values);
   // console.log('TCL: IndexPage:React.FC -> errors', errors);
+  // console.log('TCL: IndexPage:React.FC -> validationStatus', validationStatus);
+  // console.log('TCL: IndexPage:React.FC -> formState', formState);
 
   return (
     <Box display="flex" flexDirection="column">
       <StyledTextField
         label="email"
-        {...bind('email')}
-        error={!!errors?.email?.message}
-        helperText={errors?.email?.message}
+        {...bind('form.email')}
+        error={!!errors?.form?.email.message}
+        helperText={errors?.form?.email.message}
       />
       <StyledTextField
         label="password"
-        {...bind('password')}
+        {...bind('form.password')}
         error={!!errors?.password?.message}
         helperText={errors?.password?.message}
       />

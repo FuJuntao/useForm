@@ -9,15 +9,6 @@ export type FieldNames<FieldValues extends BasicFieldValues> = Extract<
 
 type GetValueFromEvent<T = any> = (e: any) => T;
 
-export interface FormOptions<FieldValues> {
-  defaultValues: FieldValues;
-  getValueFromEvent?: GetValueFromEvent;
-  collectValueTrigger?: string;
-  validationTriggers?: string | string[];
-  startValidationAfterSubmitting?: boolean;
-  validateOptions?: ValidateOptions;
-}
-
 export interface RegisterOption<
   FieldValues,
   Key extends FieldNames<FieldValues> = FieldNames<FieldValues>
@@ -30,16 +21,6 @@ export interface RegisterOption<
   validationSchema?: Schema<FieldValues[Key]>;
   startValidationAfterSubmitting?: boolean;
 }
-
-export type FieldOptions<FieldValues> = {
-  [Key in FieldNames<FieldValues>]?: {
-    getValueFromEvent: GetValueFromEvent<FieldValues[Key]>;
-    collectValueTrigger: string;
-    validationTriggers: string[];
-    validationSchema?: Schema<FieldValues[Key]>;
-    startValidationAfterSubmitting: boolean;
-  };
-};
 
 /* prettier-ignore */
 export interface Register<FieldValues> {
@@ -60,12 +41,33 @@ export type Handlers<Keys = string> = {
   [Key in Extract<Keys, string>]: (e: any) => void;
 };
 
-export type FieldErrors<FieldValues extends BasicFieldValues> = {
+export interface FormOptions<FieldValues> {
+  defaultValues: FieldValues;
+  getValueFromEvent?: GetValueFromEvent;
+  collectValueTrigger?: string;
+  validationTriggers?: string | string[];
+  startValidationAfterSubmitting?: boolean;
+  validateOptions?: ValidateOptions;
+}
+
+export type FieldOptions<FieldValues> = {
   [Key in FieldNames<FieldValues>]?: {
-    type: string;
-    message: string;
-    errors: { [Key in string]: string };
+    getValueFromEvent: GetValueFromEvent<FieldValues[Key]>;
+    collectValueTrigger: string;
+    validationTriggers: string[];
+    validationSchema?: Schema<FieldValues[Key]>;
+    startValidationAfterSubmitting: boolean;
   };
+};
+
+export interface FieldError {
+  type: string;
+  message: string;
+  errors: { [Key in string]: string };
+}
+
+export type FieldErrors<FieldValues extends BasicFieldValues> = {
+  [Key in FieldNames<FieldValues>]?: FieldError;
 };
 
 export type ValidationStatus = 'pending' | 'none';
@@ -80,3 +82,7 @@ export type FormState = {
   hasSubmitted: boolean;
   submitCount: number;
 };
+
+export interface MethodGetOptions {
+  nested?: boolean;
+}
