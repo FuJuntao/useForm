@@ -1,19 +1,19 @@
 import { Schema, ValidateOptions, ValidationError } from 'yup';
 import mapValidationError from './mapValidationError';
-import { BasicFieldValues, FieldErrors, FieldNames } from './types';
+import { BasicFieldValues, FieldError, FieldName } from './types';
 
 async function validateFieldValue<FieldValues extends BasicFieldValues>(
-  validationSchema: Schema<FieldValues>,
+  validationSchema: Schema<Partial<FieldValues>>,
   values: FieldValues,
-  fieldName: FieldNames<FieldValues>,
+  fieldName: FieldName<FieldValues>,
   validateOptions?: ValidateOptions,
-): Promise<null | FieldErrors<FieldValues>> {
+): Promise<null | FieldError> {
   try {
     await validationSchema.validateAt(fieldName, values, validateOptions);
     return null;
   } catch (error) {
     if (error instanceof ValidationError) {
-      return mapValidationError<FieldValues>(
+      return mapValidationError(
         validateOptions?.abortEarly === undefined ||
           validateOptions?.abortEarly === true
           ? error

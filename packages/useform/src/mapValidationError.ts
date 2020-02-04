@@ -1,32 +1,29 @@
 import { ValidationError } from 'yup';
-import { BasicFieldValues, FieldErrors, FieldNames } from './types';
+import { FieldError } from './types';
 
-export default function mapValidationError<
-  FieldValues extends BasicFieldValues
->(validationErrors: ValidationError | ValidationError[]) {
-  const fieldsErrors = {} as FieldErrors<FieldValues>;
-
+export default function mapValidationError(
+  validationErrors: ValidationError | ValidationError[],
+): FieldError | null {
   if (Array.isArray(validationErrors)) {
+    let fieldError: FieldError | null = null;
     validationErrors.forEach(error => {
-      const fieldPath = error.path as FieldNames<FieldValues>;
-      const previousError = fieldsErrors[fieldPath];
-      fieldsErrors[fieldPath] = {
-        type: previousError?.type ?? error.type,
-        message: previousError?.message ?? error.message,
+      const prev: Partial<FieldError> = fieldError ?? {};
+      fieldError = {
+        type: prev.type ?? error.type,
+        message: prev.message ?? error.message,
+        ...prev,
         errors: {
-          ...previousError?.errors,
+          ...prev?.errors,
           [error.type]: error.message,
         },
       };
     });
-  } else {
-    const fieldPath = validationErrors.path as FieldNames<FieldValues>;
-    fieldsErrors[fieldPath] = {
-      type: validationErrors.type,
-      message: validationErrors.message,
-      errors: {},
-    };
+    return fieldError;
   }
 
-  return fieldsErrors;
+  return {
+    type: validationErrors.type,
+    message: validationErrors.message,
+    errors: {},
+  };
 }

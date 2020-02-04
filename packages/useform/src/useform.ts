@@ -1,16 +1,18 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import * as yup from 'yup';
+import { useCallback, useRef, useState } from 'react';
 import defaultGetValueFromEvent from './defaultGetValueFromEvent';
-import getNestedObject from './getNestedObject';
+import get from './get';
+import set from './set';
 import {
   BasicFieldValues,
+  FieldError,
   FieldErrors,
+  FieldName,
+  FieldOption,
   FieldOptions,
   FieldValidationStatus,
   FormOptions,
   FormState,
   Handlers,
-  MethodGetOptions,
   Register,
   RegisterOption,
   ValidationStatus,
@@ -41,7 +43,7 @@ function getValidationTriggers(validationTriggers?: string | string[]) {
 function useForm<FieldValues extends BasicFieldValues>(
   options: FormOptions<FieldValues>,
 ) {
-  type FieldNames = Extract<keyof FieldValues, string>;
+  type FieldNames = FieldName<FieldValues>;
 
   const optionsRef = useRef(options);
   const [fieldOptions, setFieldOptions] = useState<FieldOptions<FieldValues>>();
@@ -49,26 +51,10 @@ function useForm<FieldValues extends BasicFieldValues>(
     optionsRef.current.defaultValues,
   );
   const [errors, setErrors] = useState<FieldErrors<FieldValues> | null>(null);
-  console.log('TCL: errors', errors);
   const [validationStatus, setValidationSatus] = useState<
     FieldValidationStatus<FieldValues> | undefined
   >();
   const [formState, setFormState] = useState<FormState>(defaultFormState);
-
-  const validationSchema = useMemo(() => {
-    if (!fieldOptions) return null;
-    const schema = {} as {
-      [Key in keyof FieldValues]: yup.Schema<FieldValues[Key]>;
-    };
-    Object.entries(fieldOptions).forEach(item => {
-      const key = item[0] as keyof FieldValues;
-      const validationSchema = item[1]?.validationSchema;
-      if (validationSchema) {
-        schema[key] = validationSchema;
-      }
-    });
-    return yup.object().shape(schema);
-  }, [fieldOptions]);
 
   const setIsFormSubmitting = useCallback((isSubmitting: boolean) => {
     setFormState(formState => ({ ...formState, isSubmitting }));
@@ -78,67 +64,29 @@ function useForm<FieldValues extends BasicFieldValues>(
     setFormState(formState => ({ ...formState, dirty: true }));
   }, []);
 
-  const getValues = useCallback(
-    <NestedValues = any>(options?: MethodGetOptions) =>
-      options?.nested === undefined || options?.nested === true
-        ? getNestedObject<NestedValues>(values)
-        : values,
-    [values],
-  );
-
   const setValue = useCallback(
     <FieldName extends FieldNames>(
       fieldName: FieldName,
       value: FieldValues[FieldName],
     ) => {
-      setValues(values => ({ ...values, [fieldName]: value }));
+      setValues(values => set(values, fieldName, value));
       markDirty();
     },
     [markDirty],
   );
 
-  const getErrors = useCallback(
-    <NestedErrors = any>(options?: MethodGetOptions) =>
-      options?.nested === undefined || options?.nested === true
-        ? getNestedObject<NestedErrors>(errors)
-        : errors,
-    [errors],
-  );
-
   const setError = useCallback(
-    <FieldName extends FieldNames>(
-      fieldName: FieldName,
-      error: FieldErrors<FieldValues> | null,
-    ) => {
-      setErrors(errors => {
-        const newErrors: FieldErrors<FieldValues> = { ...errors };
-        if (!error) {
-          delete newErrors[fieldName];
-          return newErrors;
-        }
-        return { ...newErrors, ...error };
-      });
+    (fieldName: FieldNames, error: FieldError | null) => {
+      setErrors(errors => set(errors, fieldName, error));
     },
     [],
   );
 
-  const getValidationStatus = useCallback(
-    <NestedValidationStatus = any>(options?: MethodGetOptions) =>
-      options?.nested === undefined || options?.nested === true
-        ? getNestedObject<NestedValidationStatus>(validationStatus)
-        : validationStatus,
-    [validationStatus],
-  );
-
   const setFieldValidationSatus = useCallback(
-    <FieldName extends FieldNames>(
-      fieldName: FieldName,
-      status: ValidationStatus,
-    ) => {
-      setValidationSatus(validationStatus => ({
-        ...validationStatus,
-        [fieldName]: status,
-      }));
+    (fieldName: FieldNames, status: ValidationStatus) => {
+      setValidationSatus(validationStatus =>
+        set(validationStatus, fieldName, status),
+      );
     },
     [],
   );
@@ -150,14 +98,12 @@ function useForm<FieldValues extends BasicFieldValues>(
           (registerOption: RegisterOption<FieldValues>) => {
             const { name, defaultValue } = registerOption;
 
-            setValues(values => ({
-              ...values,
-              [name]: values[name] ?? defaultValue ?? null,
-            }));
+            setValues(values =>
+              set(values, name, get(values, name) ?? defaultValue ?? null),
+            );
 
-            setFieldOptions(fieldOptions => ({
-              ...fieldOptions,
-              [name]: {
+            setFieldOptions(fieldOptions =>
+              set(fieldOptions ?? {}, name, {
                 getValueFromEvent:
                   registerOption.getValueFromEvent ??
                   optionsRef.current.getValueFromEvent ??
@@ -172,13 +118,12 @@ function useForm<FieldValues extends BasicFieldValues>(
                     optionsRef.current.validationTriggers,
                   ) ??
                   DEFAULT_VALIDATION_TRIGGERS,
-                validationSchema: registerOption.validationSchema,
                 startValidationAfterSubmitting:
                   registerOption.startValidationAfterSubmitting ??
                   optionsRef.current.startValidationAfterSubmitting ??
                   true,
-              },
-            }));
+              }),
+            );
 
             setFieldValidationSatus(name, 'none');
           },
@@ -189,7 +134,10 @@ function useForm<FieldValues extends BasicFieldValues>(
 
   const getCollectValueEventHandler = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
+      const getValueFromEvent = get<FieldOption<FieldValues[FieldName]>>(
+        fieldOptions,
+        fieldName,
+      )?.getValueFromEvent;
       return async (e: any) => {
         if (getValueFromEvent) {
           const value = getValueFromEvent(e);
@@ -202,21 +150,26 @@ function useForm<FieldValues extends BasicFieldValues>(
 
   const getValidationEventHandlers = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const validationTriggers = fieldOptions?.[fieldName]?.validationTriggers;
-      const getValueFromEvent = fieldOptions?.[fieldName]?.getValueFromEvent;
+      const fieldOption = get<FieldOption<FieldValues[FieldName]>>(
+        fieldOptions,
+        fieldName,
+      );
+      const validationTriggers = fieldOption?.validationTriggers;
+      const getValueFromEvent = fieldOption?.getValueFromEvent;
       const startValidationAfterSubmitting =
-        fieldOptions?.[fieldName]?.startValidationAfterSubmitting;
+        fieldOption?.startValidationAfterSubmitting;
+      const { validationSchema } = optionsRef.current;
       const handlers: Handlers = {};
       if (validationTriggers) {
         validationTriggers.forEach(item => {
           handlers[item] = async (e: any) => {
             if (
-              getValueFromEvent &&
               validationSchema &&
+              getValueFromEvent &&
               (!startValidationAfterSubmitting || formState.hasSubmitted)
             ) {
               const value = getValueFromEvent(e);
-              const newValues = { ...values, [fieldName]: value };
+              const newValues = set<FieldValues>(values, fieldName, value);
               setFieldValidationSatus(fieldName, 'pending');
               const validationResult = await validateFieldValue<FieldValues>(
                 validationSchema,
@@ -237,16 +190,18 @@ function useForm<FieldValues extends BasicFieldValues>(
       formState.hasSubmitted,
       setError,
       setFieldValidationSatus,
-      validationSchema,
       values,
     ],
   );
 
-  const getEventHandlers = useCallback(
+  const mergeEventHandlers = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const collectValueTrigger =
-        fieldOptions?.[fieldName]?.collectValueTrigger;
-      const validationTriggers = fieldOptions?.[fieldName]?.validationTriggers;
+      const fieldOption = get<FieldOption<FieldValues[FieldName]>>(
+        fieldOptions,
+        fieldName,
+      );
+      const collectValueTrigger = fieldOption?.collectValueTrigger;
+      const validationTriggers = fieldOption?.validationTriggers;
       if (!collectValueTrigger || !validationTriggers) return {};
 
       const collectValueEventHandler = getCollectValueEventHandler(fieldName);
@@ -256,7 +211,7 @@ function useForm<FieldValues extends BasicFieldValues>(
         [collectValueTrigger]: (e: any) => {
           collectValueEventHandler(e);
           if (validationTriggers.includes(collectValueTrigger)) {
-            validationEventHandlers[collectValueTrigger](e);
+            validationEventHandlers[collectValueTrigger]?.(e);
           }
         },
       };
@@ -266,10 +221,10 @@ function useForm<FieldValues extends BasicFieldValues>(
 
   const bind = useCallback(
     <FieldName extends FieldNames>(fieldName: FieldName) => {
-      const value = values[fieldName];
-      return { value, ...getEventHandlers(fieldName) };
+      const value = get(values, fieldName);
+      return { value, ...mergeEventHandlers(fieldName) };
     },
-    [getEventHandlers, values],
+    [mergeEventHandlers, values],
   );
 
   const handleSubmit = useCallback(
@@ -279,6 +234,7 @@ function useForm<FieldValues extends BasicFieldValues>(
         hasSubmitted: true,
         submitCount: formState.submitCount + 1,
       }));
+      const { validationSchema } = optionsRef.current;
       if (validationSchema) {
         setIsFormSubmitting(true);
         const validationResult = await validateFieldValues<FieldValues>(
@@ -292,18 +248,17 @@ function useForm<FieldValues extends BasicFieldValues>(
         }
       }
     },
-    [setIsFormSubmitting, validationSchema, values],
+    [setIsFormSubmitting, values],
   );
 
   return {
     register,
     bind,
     formState,
-    getValues,
+    values,
     setValue,
-    getErrors,
+    errors,
     setError,
-    getValidationStatus,
     validationStatus,
     setValidationSatus: setFieldValidationSatus,
     handleSubmit,

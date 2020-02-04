@@ -2,44 +2,20 @@ import { Schema, ValidateOptions } from 'yup';
 
 export type BasicFieldValues = Record<string, any>;
 
-export type FieldNames<FieldValues extends BasicFieldValues> = Extract<
-  keyof FieldValues,
-  string
->;
+export type FieldName<T> = (keyof T & string) | string;
+
+type BasicTypes =
+  | DateConstructor
+  | number
+  | string
+  | boolean
+  | symbol
+  | null
+  | undefined;
 
 type GetValueFromEvent<T = any> = (e: any) => T;
 
-export interface RegisterOption<
-  FieldValues,
-  Key extends FieldNames<FieldValues> = FieldNames<FieldValues>
-> {
-  name: Key;
-  defaultValue?: FieldValues[Key];
-  getValueFromEvent?: GetValueFromEvent<FieldValues[Key]>;
-  collectValueTrigger?: string;
-  validationTriggers?: string | string[];
-  validationSchema?: Schema<FieldValues[Key]>;
-  startValidationAfterSubmitting?: boolean;
-}
-
-/* prettier-ignore */
-export interface Register<FieldValues> {
-  <T1 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>, T6 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>, T6 extends FieldNames<FieldValues>, T7 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>, T6 extends FieldNames<FieldValues>, T7 extends FieldNames<FieldValues>, T8 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>, T6 extends FieldNames<FieldValues>, T7 extends FieldNames<FieldValues>, T8 extends FieldNames<FieldValues>, T9 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>, RegisterOption<FieldValues, T9>]): void;
-  <T1 extends FieldNames<FieldValues>, T2 extends FieldNames<FieldValues>, T3 extends FieldNames<FieldValues>, T4 extends FieldNames<FieldValues>, T5 extends FieldNames<FieldValues>, T6 extends FieldNames<FieldValues>, T7 extends FieldNames<FieldValues>, T8 extends FieldNames<FieldValues>, T9 extends FieldNames<FieldValues>, T10 extends FieldNames<FieldValues>>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>, RegisterOption<FieldValues, T9>, RegisterOption<FieldValues, T10>]): void;
-  (...options: RegisterOption<FieldValues>[]): void;
-}
-
-export type Handlers<Keys = string> = {
-  [Key in Extract<Keys, string>]: (e: any) => void;
-};
+type KeyType = string | number;
 
 export interface FormOptions<FieldValues> {
   defaultValues: FieldValues;
@@ -47,17 +23,31 @@ export interface FormOptions<FieldValues> {
   collectValueTrigger?: string;
   validationTriggers?: string | string[];
   startValidationAfterSubmitting?: boolean;
+  validationSchema?: Schema<Partial<FieldValues>>;
   validateOptions?: ValidateOptions;
 }
 
+export interface FieldOption<T> {
+  getValueFromEvent: GetValueFromEvent<T>;
+  collectValueTrigger: string;
+  validationTriggers: string[];
+  startValidationAfterSubmitting: boolean;
+}
+
+type NestedObject<T, P> = {
+  [Key in keyof T]: T[Key] extends BasicTypes ? P : NestedObject<T[Key], P>;
+};
+
+type PartialNestedObject<T, P> = {
+  [Key in keyof T]?: T[Key] extends BasicTypes
+    ? P
+    : PartialNestedObject<T[Key], P>;
+};
+
 export type FieldOptions<FieldValues> = {
-  [Key in FieldNames<FieldValues>]?: {
-    getValueFromEvent: GetValueFromEvent<FieldValues[Key]>;
-    collectValueTrigger: string;
-    validationTriggers: string[];
-    validationSchema?: Schema<FieldValues[Key]>;
-    startValidationAfterSubmitting: boolean;
-  };
+  [Key in keyof FieldValues]?: keyof FieldValues[Key] extends KeyType
+    ? FieldOptions<FieldValues[Key]>
+    : FieldOption<FieldValues[Key]>;
 };
 
 export interface FieldError {
@@ -66,15 +56,17 @@ export interface FieldError {
   errors: { [Key in string]: string };
 }
 
-export type FieldErrors<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]?: FieldError;
-};
+export type FieldErrors<FieldValues> = PartialNestedObject<
+  FieldValues,
+  FieldError
+>;
 
 export type ValidationStatus = 'pending' | 'none';
 
-export type FieldValidationStatus<FieldValues extends BasicFieldValues> = {
-  [Key in FieldNames<FieldValues>]?: ValidationStatus;
-};
+export type FieldValidationStatus<FieldValues> = NestedObject<
+  FieldValues,
+  ValidationStatus
+>;
 
 export type FormState = {
   dirty: boolean;
@@ -83,6 +75,30 @@ export type FormState = {
   submitCount: number;
 };
 
-export interface MethodGetOptions {
-  nested?: boolean;
+export interface RegisterOption<FieldValues, T = any> {
+  name: FieldName<FieldValues> | string;
+  defaultValue?: T;
+  getValueFromEvent?: GetValueFromEvent<T>;
+  collectValueTrigger?: string;
+  validationTriggers?: string | string[];
+  startValidationAfterSubmitting?: boolean;
 }
+
+/* prettier-ignore */
+export interface Register<FieldValues> {
+  <T1>(...options: [RegisterOption<FieldValues, T1>]): void;
+  <T1, T2>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>]): void;
+  <T1, T2, T3>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>]): void;
+  <T1, T2, T3, T4>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>]): void;
+  <T1, T2, T3, T4, T5>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>]): void;
+  <T1, T2, T3, T4, T5, T6>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>]): void;
+  <T1, T2, T3, T4, T5, T6, T7>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>]): void;
+  <T1, T2, T3, T4, T5, T6, T7, T8>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>]): void;
+  <T1, T2, T3, T4, T5, T6, T7, T8, T9>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>, RegisterOption<FieldValues, T9>]): void;
+  <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(...options: [RegisterOption<FieldValues, T1>, RegisterOption<FieldValues, T2>, RegisterOption<FieldValues, T3>, RegisterOption<FieldValues, T4>, RegisterOption<FieldValues, T5>, RegisterOption<FieldValues, T6>, RegisterOption<FieldValues, T7>, RegisterOption<FieldValues, T8>, RegisterOption<FieldValues, T9>, RegisterOption<FieldValues, T10>]): void;
+  (...options: RegisterOption<FieldValues>[]): void;
+}
+
+export type Handlers = {
+  [Key in any]?: (e: any) => void;
+};
